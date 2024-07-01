@@ -1,0 +1,11 @@
+version: '3.9'
+
+# NOTE: local development only
+services:
+  clickhouse:
+    image: ${CLICKHOUSE_IMAGE:-clickhouse/clickhouse-server:latest-alpine}
+    restart: unless-stopped
+    ports:
+      - 8123:8123
+      - 9001:9000
+
