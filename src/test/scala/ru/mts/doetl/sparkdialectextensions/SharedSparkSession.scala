@@ -15,16 +15,16 @@ trait SharedSparkSession extends BeforeAndAfterAll { self: Suite =>
   override def beforeAll(): Unit = {
     super.beforeAll()
 
-    val jarPath = Paths.get("target", "scala-2.12").toFile.listFiles()
-      .find(_.getName.endsWith(".jar"))
-      .map(_.getAbsolutePath)
-      .getOrElse(throw new IllegalStateException("JAR file not found in target/scala-2.12"))
+    val scalaVersion: String = scala.util.Properties.versionNumberString
+    val majorScalaVersion: String = scalaVersion.split('.').take(2).mkString(".")
+    val jarFiles = Paths.get("target", s"scala-$majorScalaVersion").toFile.listFiles().filter(_.isFile)
+    val jarPaths = jarFiles.map(_.getAbsolutePath).mkString(",")
 
     _spark = SparkSession.builder()
       .master("local[*]")
       .appName("Spark Test Session")
       .config("spark.ui.enabled", "false")  // disable UI to reduce overhead
-      .config("spark.jars", jarPath)  // include the JAR file containing the custom dialect
+      .config("spark.jars", jarPaths)  // include the JAR file containing the custom dialect
       .getOrCreate()
 
     // register custom Clickhouse dialect
