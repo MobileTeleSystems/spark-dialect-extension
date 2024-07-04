@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 import org.apache.spark.sql.jdbc.JdbcDialects
 
 
-import ru.mts.doetl.sparkdialectextensions.clickhouse.{ClickhouseDataframe, ClickhouseFixture}
+import ru.mts.doetl.sparkdialectextensions.clickhouse.{ClickhouseDataframeGenerator, ClickhouseFixture}
 
 class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSession with ClickhouseFixture {
 
@@ -25,7 +25,7 @@ class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSe
   }
 
   test("test clickhouse creation and table insertion to existing table") {
-    val generator = new ClickhouseDataframe(spark)
+    val generator = new ClickhouseDataframeGenerator(spark)
     val df = generator.createDataFrame()
     assert(df.count() > 0)
 

@@ -5,7 +5,7 @@ This repository hosts the Spark Dialect Extension, which provides custom handlin
 
 ## Prerequisites
 Before you begin, ensure you have the following prerequisites installed:
-- **Java**: Java 11 or higher is required for compilation step. This is necessary because certain libraries such as logging frameworks, are compiled with Java 11. This ensures compatibility and stability of the runtime environment. [Java Installation Guide](https://adoptopenjdk.net/)
+- **Java**: Java 8 or higher required. [Java Installation Guide](https://adoptopenjdk.net/)
 - **Scala**: [Scala Installation Guide](https://scala-lang.org/download/)
 - **SBT**: [SBT Installation Guide](https://www.scala-sbt.org/download.html)
 
@@ -34,7 +34,7 @@ This will place the generated `.jar` file in the `target/scala-2.12` directory.
 Before running the tests, start the necessary database services using Docker Compose:
 
 ``` bash
-docker-compose up -d
+docker-compose -f docker-compose.test.yml up -d
 ```
 
 ### Running Scala Tests:

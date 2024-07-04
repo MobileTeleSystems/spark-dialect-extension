@@ -3,7 +3,7 @@ package ru.mts.doetl.sparkdialectextensions.clickhouse
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
-class ClickhouseDataframe(spark: SparkSession) {
+class ClickhouseDataframeGenerator(spark: SparkSession) {
   def createDataFrame(): DataFrame = {
     val data = Seq(
       (true, 1.toByte, 150.toShort, new java.sql.Timestamp(System.currentTimeMillis()), "{\"created_by\":\"spark\"}"),
