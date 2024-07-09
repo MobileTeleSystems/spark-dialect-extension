@@ -29,8 +29,13 @@ trait ClickhouseFixture extends BeforeAndAfterEach { self: Suite =>
 
   def setupTable(tableSchema: String, engine: String = "TinyLog"): Unit = {
     val statement = connection.createStatement()
-    statement.executeUpdate(s"DROP TABLE IF EXISTS $tableName")
-    statement.executeUpdate(s"CREATE TABLE $tableName ($tableSchema) ENGINE = $engine")
+    val commands =
+    s"""
+      |SET allow_experimental_object_type = 1;
+      |DROP TABLE IF EXISTS $tableName;
+      |CREATE TABLE $tableName ($tableSchema) ENGINE = $engine;
+    """.stripMargin
+    statement.executeUpdate(commands)
     statement.close()
   }
 
