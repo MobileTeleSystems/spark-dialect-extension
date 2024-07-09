@@ -3,12 +3,22 @@ package ru.mts.doetl.sparkdialectextensions
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.apache.spark.sql.jdbc.JdbcDialects
-import org.apache.spark.sql.types.{BooleanType, ByteType, IntegerType, ShortType, StringType, StructField, StructType, TimestampType}
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.Metadata
+import org.apache.spark.sql.types.{BooleanType, ByteType, ShortType, StringType, StructField, StructType, TimestampType}
 
 import ru.mts.doetl.sparkdialectextensions.clickhouse.{ClickhouseDataframeGenerator, ClickhouseFixture}
 
 class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSession with ClickhouseFixture {
+
+
+  /**
+   * this function is used to normalize schemas for comparison purposes
+   * to handle cases such as: 'StructField("shortColumn", ShortType, true, {"scale":0})'
+   * is equal to 'StructField("shortColumn", ShortType, true, {})'
+   */
+  def stripMetadata(schema: StructType): StructType = {
+    StructType(schema.fields.map(f => f.copy(metadata = Metadata.empty)))
+  }
 
   test("custom clickhouse dialect usage") {
     val dialect = JdbcDialects.get("jdbc:clickhouse")
@@ -23,9 +33,9 @@ class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSe
         |byteColumn Int8,
         |shortColumn Int16,
         |timestampColumn Datetime64(6),
-        |jsonColumn String
+        |jsonColumn JSON
     """.stripMargin
-    setupTable(schema)
+    setupTable(schema, engine = "Memory")
 
     val df = spark.read
       .format("jdbc")
@@ -35,8 +45,8 @@ class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSe
 
     val expectedSchema = StructType(Seq(
       StructField("booleanColumn", BooleanType, nullable = true),
-      StructField("byteColumn", IntegerType, nullable = true),
-      StructField("shortColumn", IntegerType, nullable = true),
+      StructField("byteColumn",  ByteType, nullable = true),
+      StructField("shortColumn", ShortType, nullable = true),
       StructField("timestampColumn", TimestampType, nullable = true),
       StructField("jsonColumn", StringType, nullable = true)
     ))
@@ -53,7 +63,7 @@ class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSe
         |shortColumn Int16,
         |timestampColumn Datetime64(6),
         |jsonColumn String
-    """.stripMargin
+    """.stripMargin  // spark does not support writing StringType() "{\"created_by\":\"spark\"}" to clickhouse JSON column
     setupTable(schema)
 
     val generator = new ClickhouseDataframeGenerator(spark)
@@ -74,16 +84,7 @@ class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSe
       .option("dbtable", tableName)
       .load()
 
-    // TODO: remove after implementing custom mapping in ClickhouseDialectExtension
-    val castedLoadedDf = loadedDf.select(
-      col("booleanColumn").cast(BooleanType),
-      col("byteColumn").cast(ByteType),
-      col("shortColumn").cast(ShortType),
-      col("timestampColumn").cast(TimestampType),
-      col("jsonColumn").cast(StringType)
-    )
-
-    assert(castedLoadedDf.schema == df.schema)
+    assert(stripMetadata(loadedDf.schema) == stripMetadata(df.schema))
   }
 
   test("test spark dataframe create and write to new clickhouse table") {
@@ -107,15 +108,6 @@ class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSe
       .option("dbtable", tableName)
       .load()
 
-    // TODO: remove after implementing custom mapping in ClickhouseDialectExtension
-    val castedLoadedDf = loadedDf.select(
-      col("booleanColumn").cast(BooleanType),
-      col("byteColumn").cast(ByteType),
-      col("shortColumn").cast(ShortType),
-      col("timestampColumn").cast(TimestampType),
-      col("jsonColumn").cast(StringType)
-    )
-
-    assert(castedLoadedDf.schema == df.schema)
+    assert(stripMetadata(loadedDf.schema) == stripMetadata(df.schema))
   }
 }

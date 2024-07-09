@@ -47,5 +47,5 @@ sbt test
 After the tests, you can stop the Docker containers with:
 
 ``` bash
-docker-compose down
+docker-compose -f docker-compose.test.yml down
 ```
