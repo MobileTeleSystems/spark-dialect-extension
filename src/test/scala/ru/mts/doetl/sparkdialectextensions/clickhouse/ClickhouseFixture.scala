@@ -31,7 +31,6 @@ trait ClickhouseFixture extends BeforeAndAfterEach { self: Suite =>
     val statement = connection.createStatement()
     val commands =
     s"""
-      |SET allow_experimental_object_type = 1;
       |DROP TABLE IF EXISTS $tableName;
       |CREATE TABLE $tableName ($tableSchema) ENGINE = $engine;
     """.stripMargin

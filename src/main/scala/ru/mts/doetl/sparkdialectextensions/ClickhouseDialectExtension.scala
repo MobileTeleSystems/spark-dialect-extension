@@ -35,16 +35,16 @@ private object ClickhouseDialectExtension extends JdbcDialect {
                                 size: Int,
                                 md: MetadataBuilder): Option[DataType] = (sqlType, typeName) match {
     case (Types.VARCHAR, "JSON") =>
-      logger.debug("Custom mapping applied: StringType for 'JSON'")
+      logger.info("Custom mapping applied: StringType for 'JSON'")
       Some(StringType)
     case (Types.TINYINT, "Int8") =>
-      logger.debug("Custom mapping applied: ByteType for 'Int8'")
+      logger.info("Custom mapping applied: ByteType for 'Int8'")
       Some(ByteType)
     case (Types.SMALLINT, "Int16") =>
-      logger.debug("Custom mapping applied: ShortType for 'Int16'")
+      logger.info("Custom mapping applied: ShortType for 'Int16'")
       Some(ShortType)
     case _ =>
-      logger.debug(s"No custom JDBC type mapping for sqlType: $sqlType, typeName: $typeName, default driver mapping is used")
+      logger.info(s"No custom JDBC type mapping for sqlType: $sqlType, typeName: $typeName, default driver mapping is used")
       None
   }
 
@@ -58,16 +58,16 @@ private object ClickhouseDialectExtension extends JdbcDialect {
    */
   override def getJDBCType(dt: DataType): Option[JdbcType] = dt match {
     case BooleanType =>
-      logger.debug("Custom mapping applied: Bool for 'BooleanType'")
+      logger.info("Custom mapping applied: Bool for 'BooleanType'")
       Some(JdbcType("Bool", Types.BOOLEAN))
     case ShortType =>
-      logger.debug("Custom mapping applied: Int16 for 'ShortType'")
+      logger.info("Custom mapping applied: Int16 for 'ShortType'")
       Some(JdbcType("Int16", Types.SMALLINT))
     case TimestampType =>
-      logger.debug("Custom mapping applied: Datetime64(6) for 'TimestampType'")
+      logger.info("Custom mapping applied: Datetime64(6) for 'TimestampType'")
       Some(JdbcType("Datetime64(6)", Types.TIMESTAMP))
     case _ =>
-      logger.debug(s"No custom JDBC type mapping for DataType: ${dt.simpleString}, default driver mapping is used")
+      logger.info(s"No custom JDBC type mapping for DataType: ${dt.simpleString}, default driver mapping is used")
       None
   }
 }

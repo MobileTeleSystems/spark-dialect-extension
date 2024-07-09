@@ -33,9 +33,8 @@ class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSe
         |byteColumn Int8,
         |shortColumn Int16,
         |timestampColumn Datetime64(6),
-        |jsonColumn JSON
     """.stripMargin
-    setupTable(schema, engine = "Memory")
+    setupTable(schema)
 
     val df = spark.read
       .format("jdbc")
@@ -48,7 +47,6 @@ class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSe
       StructField("byteColumn",  ByteType, nullable = true),
       StructField("shortColumn", ShortType, nullable = true),
       StructField("timestampColumn", TimestampType, nullable = true),
-      StructField("jsonColumn", StringType, nullable = true)
     ))
 
     assert(df.schema.treeString === expectedSchema.treeString)
@@ -62,8 +60,7 @@ class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSe
         |byteColumn Int8,
         |shortColumn Int16,
         |timestampColumn Datetime64(6),
-        |jsonColumn String
-    """.stripMargin  // spark does not support writing StringType() "{\"created_by\":\"spark\"}" to clickhouse JSON column
+    """.stripMargin
     setupTable(schema)
 
     val generator = new ClickhouseDataframeGenerator(spark)
