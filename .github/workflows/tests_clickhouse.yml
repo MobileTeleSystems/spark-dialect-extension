@@ -1,14 +1,17 @@
-name: Scala CI with ClickHouse
+name: Tests Clickhouse
 
 on:
-  pull_request:
+  push:
     branches:
       - develop
+  pull_request:
+    branches-ignore:
       - master
+  workflow_dispatch:
 
 jobs:
   build:
-    name: Tests on Clickhouse
+    name: Tests
     runs-on: ubuntu-latest
     services:
       clickhouse:
