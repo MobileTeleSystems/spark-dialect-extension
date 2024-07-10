@@ -38,10 +38,18 @@ docker-compose -f docker-compose.test.yml up -d
 ```
 
 ### Running Scala Tests:
-To execute the Scala tests, use the following command:
+To execute the Scala tests, use the following:
 ```bash
 sbt test
 ```
+
+##### With coverage report:
+To run the tests with coverage and generate a report, use the following:
+```bash
+sbt clean coverage test coverageReport
+```
+After running the tests with coverage, you can view the coverage report by opening the following file in your web browser:
+``spark-dialect-extension/target/scala-2.12/scoverage-report/index.html``
 
 ### Stopping Docker Containers:
 After the tests, you can stop the Docker containers with:
