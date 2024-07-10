@@ -1,0 +1,56 @@
+name: Scala CI with ClickHouse
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - master
+
+jobs:
+  build:
+    name: Tests on Clickhouse
+    runs-on: ubuntu-latest
+    services:
+      clickhouse:
+        image: clickhouse/clickhouse-server
+        env:
+          TZ: UTC
+        ports:
+          - 8123:8123
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache SBT
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.ivy2/cache
+            ~/.sbt
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+
+      - name: Setup JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+
+      - name: Setup Scala and SBT
+        uses: olafurpg/setup-scala@v14
+        with:
+          java-version: '8'
+
+      - name: Compile .jar package with SBT
+        run: |
+          sbt package
+
+      - name: Run Integration Tests with Coverage
+        run: |
+          sbt clean coverage test coverageReport
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: target/scala-2.12/scoverage-report/scoverage.xml
+          fail_ci_if_error: true
