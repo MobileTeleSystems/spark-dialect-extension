@@ -4,7 +4,8 @@ organization := "ru.mts.doetl"
 organizationName := "Mobile Telesystems"
 
 version := "0.1"
-scalaVersion := "2.12.10"
+// minimum compatible version with scalafix
+scalaVersion := "2.12.19"
 
 description := "Spark dialect extension for enhanced type handling."
 
@@ -13,6 +14,15 @@ homepage := Some(url("https://theplatform.ru/platforms/dataops"))
 startYear := Some(2024)
 
 licenses += "Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
+
+
+inThisBuild(List(
+  semanticdbEnabled := true, // enable SemanticDB
+  semanticdbVersion := scalafixSemanticdb.revision,
+  scalaVersion := "2.12.19",
+))
+// warn unused params (needed for scalafix)
+scalacOptions += "-Ywarn-unused"
 
 // core Spark dependencies
 libraryDependencies ++= Seq(

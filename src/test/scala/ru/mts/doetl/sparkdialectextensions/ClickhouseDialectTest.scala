@@ -9,13 +9,16 @@ import org.apache.spark.sql.types.{BooleanType, ByteType, ShortType, StructField
 
 import ru.mts.doetl.sparkdialectextensions.clickhouse.{ClickhouseDataframeGenerator, ClickhouseFixture}
 
-class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSession with ClickhouseFixture {
-
+class ClickhouseDialectTest
+    extends AnyFunSuite
+    with Matchers
+    with SharedSparkSession
+    with ClickhouseFixture {
 
   /**
-   * this function is used to normalize schemas for comparison purposes
-   * to handle cases such as: 'StructField("shortColumn", ShortType, true, {"scale":0})'
-   * is equal to 'StructField("shortColumn", ShortType, true, {})'
+   * this function is used to normalize schemas for comparison purposes to handle cases such as:
+   * 'StructField("shortColumn", ShortType, true, {"scale":0})' is equal to
+   * 'StructField("shortColumn", ShortType, true, {})'
    */
   def stripMetadata(schema: StructType): StructType = {
     StructType(schema.fields.map(f => f.copy(metadata = Metadata.empty)))
@@ -43,12 +46,12 @@ class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSe
       .option("dbtable", tableName)
       .load()
 
-    val expectedSchema = StructType(Seq(
-      StructField("booleanColumn", BooleanType, nullable = true),
-      StructField("byteColumn",  ByteType, nullable = true),
-      StructField("shortColumn", ShortType, nullable = true),
-      StructField("timestampColumn", TimestampType, nullable = true),
-    ))
+    val expectedSchema = StructType(
+      Seq(
+        StructField("booleanColumn", BooleanType, nullable = true),
+        StructField("byteColumn", ByteType, nullable = true),
+        StructField("shortColumn", ShortType, nullable = true),
+        StructField("timestampColumn", TimestampType, nullable = true)))
 
     assert(df.schema.treeString === expectedSchema.treeString)
   }
@@ -142,13 +145,8 @@ class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSe
   }
 
   test("write Spark ShortType as ClickHouse Int16") {
-    val schema = StructType(Seq(
-      StructField("shortColumn", ShortType, nullable = true)
-    ))
-    val data = Seq(
-      Row(Short.MinValue),
-      Row(Short.MaxValue)
-    )
+    val schema = StructType(Seq(StructField("shortColumn", ShortType, nullable = true)))
+    val data = Seq(Row(Short.MinValue), Row(Short.MaxValue))
     val df = spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
 
     df.write
@@ -174,13 +172,9 @@ class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSe
   }
 
   test("write Spark TimestampType as ClickHouse Datetime64(6)") {
-    val schema = StructType(Seq(
-      StructField("timestampColumn", TimestampType, nullable = true)
-    ))
+    val schema = StructType(Seq(StructField("timestampColumn", TimestampType, nullable = true)))
     val currentTime = new java.sql.Timestamp(System.currentTimeMillis())
-    val data = Seq(
-      Row(currentTime)
-    )
+    val data = Seq(Row(currentTime))
     val df = spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
 
     df.write
@@ -206,13 +200,8 @@ class ClickhouseDialectTest extends AnyFunSuite with Matchers with SharedSparkSe
   }
 
   test("write Spark BooleanType as ClickHouse Bool") {
-    val schema = StructType(Seq(
-      StructField("booleanColumn", BooleanType, nullable = true)
-    ))
-    val data = Seq(
-      Row(true),
-      Row(false)
-    )
+    val schema = StructType(Seq(StructField("booleanColumn", BooleanType, nullable = true)))
+    val data = Seq(Row(true), Row(false))
     val df = spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
 
     df.write

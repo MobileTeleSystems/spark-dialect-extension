@@ -19,21 +19,21 @@ private object ClickhouseDialectExtension extends JdbcDialect {
    * A mock method to demonstrate the retrieval of the Catalyst type based on JDBC metadata.
    *
    * @param sqlType
-   * SQL type as integer
+   *   SQL type as integer
    * @param typeName
-   * Name of the SQL type
+   *   Name of the SQL type
    * @param size
-   * Size of the type (not used in mock)
+   *   Size of the type (not used in mock)
    * @param md
-   * MetadataBuilder for further metadata handling (not used in mock)
+   *   MetadataBuilder for further metadata handling (not used in mock)
    * @return
-   * Always returns None in this mock
+   *   Always returns None in this mock
    */
   override def getCatalystType(
-                                sqlType: Int,
-                                typeName: String,
-                                size: Int,
-                                md: MetadataBuilder): Option[DataType] = (sqlType, typeName) match {
+      sqlType: Int,
+      typeName: String,
+      size: Int,
+      md: MetadataBuilder): Option[DataType] = (sqlType, typeName) match {
     case (Types.TINYINT, "Int8") =>
       logger.debug("Custom mapping applied: ByteType for 'Int8'")
       Some(ByteType)
@@ -41,7 +41,8 @@ private object ClickhouseDialectExtension extends JdbcDialect {
       logger.debug("Custom mapping applied: ShortType for 'Int16'")
       Some(ShortType)
     case _ =>
-      logger.debug(s"No custom JDBC type mapping for sqlType: $sqlType, typeName: $typeName, default driver mapping is used")
+      logger.debug(
+        s"No custom JDBC type mapping for sqlType: $sqlType, typeName: $typeName, default driver mapping is used")
       None
   }
 
@@ -64,7 +65,8 @@ private object ClickhouseDialectExtension extends JdbcDialect {
       logger.debug("Custom mapping applied: Datetime64(6) for 'TimestampType'")
       Some(JdbcType("Datetime64(6)", Types.TIMESTAMP))
     case _ =>
-      logger.debug(s"No custom JDBC type mapping for DataType: ${dt.simpleString}, default driver mapping is used")
+      logger.debug(
+        s"No custom JDBC type mapping for DataType: ${dt.simpleString}, default driver mapping is used")
       None
   }
 }
