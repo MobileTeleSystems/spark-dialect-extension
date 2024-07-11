@@ -21,7 +21,7 @@ inThisBuild(List(
   semanticdbVersion := scalafixSemanticdb.revision,
   scalaVersion := "2.12.19",
 ))
-// want unused params (needed for scalafix)
+// warn unused params (needed for scalafix)
 scalacOptions += "-Ywarn-unused"
 
 // core Spark dependencies

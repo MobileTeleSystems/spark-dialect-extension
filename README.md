@@ -17,9 +17,14 @@ cd spark-dialect-extension
 ```
 
 ### Format Source Code:
-Run the following command to format the Scala source files using Scalafmt:
+Use Scalafmt to format your code by running:
 ```bash
-sbt scalafmtSbt
+sbt scalafmtAll
+```
+
+Use Scalafix to lint and refactor your code by running:
+```bash
+sbt scalafixAll
 ```
 
 ### Build the Project:
@@ -57,3 +62,7 @@ After the tests, you can stop the Docker containers with:
 ``` bash
 docker-compose -f docker-compose.test.yml down
 ```
+
+
+add Scalafix with Scalafmt in the continuous (CI) workflow to enhance code quality automatically, add an auto-commit changes to emulate the behavior of pre-commit hooks used in our python repositories. 
+
