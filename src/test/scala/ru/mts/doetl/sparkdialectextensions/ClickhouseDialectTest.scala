@@ -1,18 +1,19 @@
 package ru.mts.doetl.sparkdialectextensions
 
+import org.scalatest.prop.{TableDrivenPropertyChecks, TableFor3}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.sql.types.Metadata
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{BooleanType, ByteType, ShortType, StructField, StructType, TimestampType}
-
+import org.apache.spark.sql.types._
 import ru.mts.doetl.sparkdialectextensions.clickhouse.{ClickhouseDataframeGenerator, ClickhouseFixture}
 
 class ClickhouseDialectTest
     extends AnyFunSuite
     with Matchers
     with SharedSparkSession
+    with TableDrivenPropertyChecks
     with ClickhouseFixture {
 
   /**
@@ -224,5 +225,80 @@ class ClickhouseDialectTest
       }
     }
     statement.close()
+  }
+
+  val testCases: TableFor3[String, String, DataType] = Table(
+    ("columnDefinition", "insertedData", "expectedType"),
+    (
+      "charArrayColumn Array(String)",
+      "(['a', 'b', 'c', 'd', 'e'])",
+      ArrayType(StringType, containsNull = false)),
+    (
+      "intArrayColumn Array(Int8)",
+      "([1, 2, 3, 4, 5])",
+      ArrayType(ByteType, containsNull = false)),
+    (
+      "shortArrayColumn Array(Int16)",
+      "([1, 2, 3, 4, 5])",
+      ArrayType(ShortType, containsNull = false)),
+    (
+      "intArrayColumn Array(Int32)",
+      "([1, 2, 3, 4, 5])",
+      ArrayType(IntegerType, containsNull = false)),
+    (
+      "longArrayColumn Array(Int64)",
+      "([1, 2, 3, 4, 5])",
+      ArrayType(LongType, containsNull = false)),
+    (
+      "floatArrayColumn Array(Float32)",
+      "([1.0, 2.0, 3.0, 4.0, 5.0])",
+      ArrayType(FloatType, containsNull = false)),
+    (
+      "doubleArrayColumn Array(Float64)",
+      "([1.0, 2.0, 3.0, 4.0, 5.0])",
+      ArrayType(DoubleType, containsNull = false)),
+    (
+      "dateArrayColumn Array(Date)",
+      "(['2022-01-01', '2022-01-02', '2022-01-03'])",
+      ArrayType(DateType, containsNull = false)),
+    (
+      "timestampArrayColumn Array(DateTime)",
+      "(['2022-01-01 00:00:00', '2022-01-02 00:00:00', '2022-01-03 00:00:00'])",
+      ArrayType(TimestampType, containsNull = false)),
+    (
+      "decimalArrayColumn Array(Decimal(9,2))",
+      "([1.23, 2.34, 3.45, 4.56, 5.67])",
+      ArrayType(DecimalType(9, 2), containsNull = false)))
+  forAll(testCases) { (columnDefinition: String, insertedData: String, expectedType: DataType) =>
+    test(s"read ClickHouse Array for ${columnDefinition} column") {
+      setupTable(columnDefinition)
+      insertTestData(Seq(insertedData))
+
+      val df = spark.read
+        .format("jdbc")
+        .option("url", jdbcUrl)
+        .option("dbtable", tableName)
+        .load()
+
+      assert(df.schema.fields.head.dataType === expectedType)
+
+      val data = df.collect().map(_.getAs[Seq[Any]](df.schema.fields.head.name)).head
+      val expectedData = expectedType match {
+        case ArrayType(StringType, _) =>
+          insertedData.stripPrefix("(['").stripSuffix("'])").split("', '").toSeq
+        case ArrayType(_, _) =>
+          insertedData
+            .stripPrefix("([")
+            .stripSuffix("])")
+            .split(", ")
+            .map {
+              case s if s.startsWith("'") && s.endsWith("'") =>
+                s.stripPrefix("'").stripSuffix("'")
+              case other => other
+            }
+            .toSeq
+      }
+      assert(data == expectedData)
+    }
   }
 }

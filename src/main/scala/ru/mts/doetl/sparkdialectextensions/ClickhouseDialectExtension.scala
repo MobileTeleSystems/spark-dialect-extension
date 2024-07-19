@@ -1,7 +1,6 @@
-// SPDX-FileCopyrightText: 2021-2024 MTS (Mobile Telesystems)
-//SPDX-License-Identifier: Apache-2.0
 package ru.mts.doetl.sparkdialectextensions
 
+import scala.util.matching.Regex
 import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcType}
 import org.apache.spark.sql.types._
 import org.slf4j.LoggerFactory
@@ -11,40 +10,139 @@ private object ClickhouseDialectExtension extends JdbcDialect {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
+  private val arrayTypePattern: Regex = "^Array\\((.*)\\)$".r
+  private val nullableTypePattern: Regex = "^Nullable\\((.*)\\)$".r
+  private val dateTypePattern: Regex = "^[dD][aA][tT][eE]$".r
+  private val dateTimeTypePattern: Regex =
+    "^[dD][aA][tT][eE][tT][iI][mM][eE](64)?(\\((.*)\\))?$".r
+  private val decimalTypePattern: Regex =
+    "^[dD][eE][cC][iI][mM][aA][lL]\\((\\d+),\\s*(\\d+)\\)$".r
+  private val decimalTypePattern2: Regex =
+    "^[dD][eE][cC][iI][mM][aA][lL](32|64|128|256)\\((\\d+)\\)$".r
+  private val enumTypePattern: Regex = "^Enum(8|16)$".r
+  private val fixedStringTypePattern: Regex = "^FixedString\\((\\d+)\\)$".r
+
   override def canHandle(url: String): Boolean = {
     url.startsWith("jdbc:clickhouse")
   }
 
   /**
-   * A mock method to demonstrate the retrieval of the Catalyst type based on JDBC metadata.
+   * A method to demonstrate the retrieval of the Catalyst type based on JDBC metadata.
    *
    * @param sqlType
    *   SQL type as integer
    * @param typeName
    *   Name of the SQL type
    * @param size
-   *   Size of the type (not used in mock)
+   *   Size of the type
    * @param md
-   *   MetadataBuilder for further metadata handling (not used in mock)
+   *   MetadataBuilder for further metadata handling
    * @return
-   *   Always returns None in this mock
+   *   The corresponding Catalyst data type.
    */
   override def getCatalystType(
       sqlType: Int,
       typeName: String,
       size: Int,
-      md: MetadataBuilder): Option[DataType] = (sqlType, typeName) match {
-    case (Types.TINYINT, "Int8") =>
-      logger.debug("Custom mapping applied: ByteType for 'Int8'")
-      Some(ByteType)
-    case (Types.SMALLINT, "Int16") =>
-      logger.debug("Custom mapping applied: ShortType for 'Int16'")
-      Some(ShortType)
-    case _ =>
-      logger.debug(
-        s"No custom JDBC type mapping for sqlType: $sqlType, typeName: $typeName, default driver mapping is used")
-      None
+      md: MetadataBuilder): Option[DataType] = {
+    val scale = md.build.getLong("scale").toInt
+    sqlType match {
+      case Types.ARRAY =>
+        unwrapNullable(typeName) match {
+          case (_, arrayTypePattern(nestType)) =>
+            toCatalystType(Types.ARRAY, nestType, size, scale, md).map {
+              case (nullable, dataType) => ArrayType(dataType, nullable)
+            }
+          case _ => None
+        }
+      case _ => toCatalystType(sqlType, typeName, size, scale, md).map(_._2)
+    }
   }
+
+  private def toCatalystType(
+      sqlType: Int,
+      typeName: String,
+      precision: Int,
+      scale: Int,
+      md: MetadataBuilder): Option[(Boolean, DataType)] = {
+    val (nullable, _typeName) = unwrapNullable(typeName)
+    val dataType = _typeName match {
+      case "String" | "UUID" | fixedStringTypePattern() | enumTypePattern(_) =>
+        logger.debug(s"Custom mapping applied: StringType for '${_typeName}'")
+        Some(StringType)
+      case "Int8" =>
+        logger.debug(s"Custom mapping applied: ByteType for 'Int8'")
+        Some(ByteType)
+      case "UInt8" | "Int16" =>
+        logger.debug(s"Custom mapping applied: ShortType for '${_typeName}'")
+        Some(ShortType)
+      case "UInt16" | "Int32" =>
+        logger.debug(s"Custom mapping applied: IntegerType for '${_typeName}'")
+        Some(IntegerType)
+      case "UInt32" | "Int64" | "UInt64" | "IPv4" =>
+        logger.debug(s"Custom mapping applied: LongType for '${_typeName}'")
+        Some(LongType)
+      case "Int128" | "Int256" | "UInt256" =>
+        logger.debug(s"Type '${_typeName}' is not supported")
+        None
+      case "Float32" =>
+        logger.debug(s"Custom mapping applied: FloatType for 'Float32'")
+        Some(FloatType)
+      case "Float64" =>
+        logger.debug(s"Custom mapping applied: DoubleType for 'Float64'")
+        Some(DoubleType)
+      case dateTypePattern() =>
+        logger.debug(s"Custom mapping applied: DateType for '${_typeName}'")
+        Some(DateType)
+      case dateTimeTypePattern() =>
+        logger.debug(s"Custom mapping applied: TimestampType for '${_typeName}'")
+        Some(TimestampType)
+      case decimalTypePattern(precision, scale) =>
+        logger.debug(
+          s"Custom mapping applied: DecimalType($precision, $scale) for '${_typeName}'")
+        Some(DecimalType(precision.toInt, scale.toInt))
+      case decimalTypePattern2(w, scale) =>
+        w match {
+          case "32" =>
+            logger.debug(s"Custom mapping applied: DecimalType(9, $scale) for 'Decimal$w'")
+            Some(DecimalType(9, scale.toInt))
+          case "64" =>
+            logger.debug(s"Custom mapping applied: DecimalType(18, $scale) for 'Decimal$w'")
+            Some(DecimalType(18, scale.toInt))
+          case "128" =>
+            logger.debug(s"Custom mapping applied: DecimalType(38, $scale) for 'Decimal$w'")
+            Some(DecimalType(38, scale.toInt))
+          case "256" =>
+            logger.debug(s"Custom mapping applied: DecimalType(76, $scale) for 'Decimal$w'")
+            Some(
+              DecimalType(76, scale.toInt)
+            ) // throw exception, spark support precision up to 38
+        }
+      case _ =>
+        logger.debug(
+          s"No custom mapping for typeName: ${_typeName}, default driver mapping is used")
+        None
+    }
+    dataType.map((nullable, _))
+  }
+
+  /**
+   * Unwraps nullable types to determine if the type is nullable and to retrieve the base type.
+   * This logic is copied from the Housepower project.
+   *
+   * @see
+   *   https://github.com/housepower/ClickHouse-Native-JDBC
+   * @param maybeNullableTypeName
+   *   The type name that may include Nullable.
+   * @return
+   *   A tuple where the first element indicates if the type is nullable, and the second element
+   *   is the base type.
+   */
+  private def unwrapNullable(maybeNullableTypeName: String): (Boolean, String) =
+    maybeNullableTypeName match {
+      case nullableTypePattern(typeName) => (true, typeName)
+      case _ => (false, maybeNullableTypeName)
+    }
 
   /**
    * Retrieve the jdbc / sql type for a given datatype. Logging the usage of the dialect extension
