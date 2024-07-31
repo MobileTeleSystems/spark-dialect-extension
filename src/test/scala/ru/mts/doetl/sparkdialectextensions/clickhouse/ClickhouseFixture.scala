@@ -47,7 +47,7 @@ trait ClickhouseFixture extends BeforeAndAfterEach { self: Suite =>
 
   override def afterEach(): Unit = {
     val statement = connection.createStatement()
-    statement.executeUpdate(s"DROP TABLE IF EXISTS $tableName")
+//    statement.executeUpdate(s"DROP TABLE IF EXISTS $tableName")
     statement.close()
     connection.close()
     super.afterEach()

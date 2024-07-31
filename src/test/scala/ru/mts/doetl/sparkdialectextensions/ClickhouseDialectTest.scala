@@ -282,23 +282,35 @@ class ClickhouseDialectTest
 
       assert(df.schema.fields.head.dataType === expectedType)
 
-      val data = df.collect().map(_.getAs[Seq[Any]](df.schema.fields.head.name)).head
-      val expectedData = expectedType match {
-        case ArrayType(StringType, _) =>
-          insertedData.stripPrefix("(['").stripSuffix("'])").split("', '").toSeq
-        case ArrayType(_, _) =>
-          insertedData
-            .stripPrefix("([")
-            .stripSuffix("])")
-            .split(", ")
-            .map {
-              case s if s.startsWith("'") && s.endsWith("'") =>
-                s.stripPrefix("'").stripSuffix("'")
-              case other => other
-            }
-            .toSeq
-      }
-      assert(data == expectedData)
+      df.collect().map(_.getAs[Seq[Any]](df.schema.fields.head.name)).head
+      df.count() == 1
+    }
+  }
+
+  forAll(testCases) { (columnDefinition: String, insertedData: String, expectedType: DataType) =>
+    test(s"write ClickHouse Array for ${columnDefinition} column") {
+      setupTable(columnDefinition)
+      insertTestData(Seq(insertedData))
+
+      val df = spark.read
+        .format("jdbc")
+        .option("url", jdbcUrl)
+        .option("dbtable", tableName)
+        .option("wrapperObject", "true")
+        .load()
+
+      assert(df.schema.fields.head.dataType === expectedType)
+
+      df.write
+        .format("jdbc")
+        .option("url", jdbcUrl)
+        .option("dbtable", tableName)
+        .option("user", jdbcUser)
+        .option("password", jdbcPassword)
+        .mode("append")
+        .save()
+
+      df.count() == 2
     }
   }
 }

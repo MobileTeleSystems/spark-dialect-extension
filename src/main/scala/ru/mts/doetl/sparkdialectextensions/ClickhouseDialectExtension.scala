@@ -2,6 +2,7 @@ package ru.mts.doetl.sparkdialectextensions
 
 import scala.util.matching.Regex
 import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcType}
+import org.apache.spark.sql.execution.datasources.jdbc.{JdbcUtils}
 import org.apache.spark.sql.types._
 import org.slf4j.LoggerFactory
 import java.sql.Types
@@ -162,6 +163,11 @@ private object ClickhouseDialectExtension extends JdbcDialect {
     case TimestampType =>
       logger.debug("Custom mapping applied: Datetime64(6) for 'TimestampType'")
       Some(JdbcType("Datetime64(6)", Types.TIMESTAMP))
+    case ArrayType(et, _) =>
+      logger.debug("Custom mapping applied: Array[T_1] for ArrayType(T_0)")
+      getJDBCType(et)
+        .orElse(JdbcUtils.getCommonJDBCType(et))
+        .map(jdbcType => JdbcType(s"Array(${jdbcType.databaseTypeDefinition})", Types.ARRAY))
     case _ =>
       logger.debug(
         s"No custom JDBC type mapping for DataType: ${dt.simpleString}, default driver mapping is used")
