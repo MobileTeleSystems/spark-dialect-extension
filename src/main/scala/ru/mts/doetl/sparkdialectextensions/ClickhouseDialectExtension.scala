@@ -11,17 +11,12 @@ private object ClickhouseDialectExtension extends JdbcDialect {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private val arrayTypePattern: Regex = "^Array\\((.*)\\)$".r
-  private val nullableTypePattern: Regex = "^Nullable\\((.*)\\)$".r
-  private val dateTypePattern: Regex = "^[dD][aA][tT][eE]$".r
-  private val dateTimeTypePattern: Regex =
-    "^[dD][aA][tT][eE][tT][iI][mM][eE](64)?(\\((.*)\\))?$".r
-  private val decimalTypePattern: Regex =
-    "^[dD][eE][cC][iI][mM][aA][lL]\\((\\d+),\\s*(\\d+)\\)$".r
-  private val decimalTypePattern2: Regex =
-    "^[dD][eE][cC][iI][mM][aA][lL](32|64|128|256)\\((\\d+)\\)$".r
-  private val enumTypePattern: Regex = "^Enum(8|16)$".r
-  private val fixedStringTypePattern: Regex = "^FixedString\\((\\d+)\\)$".r
+  private val arrayTypePattern: Regex = """^Array\((.*)\)$""".r
+  private val nullableTypePattern: Regex = """^Nullable\((.*)\)$""".r
+  private val dateTypePattern: Regex = """(?i)^Date$""".r
+  private val dateTimeTypePattern: Regex = """(?i)^DateTime(64)?(\((.*)\))?$""".r
+  private val decimalTypePattern: Regex = """(?i)^Decimal\((\d+),\s*(\d+)\)$""".r
+  private val decimalTypePattern2: Regex = """(?i)^Decimal(32|64|128|256)\((\d+)\)$""".r
 
   override def canHandle(url: String): Boolean = {
     url.startsWith("jdbc:clickhouse")
@@ -51,6 +46,8 @@ private object ClickhouseDialectExtension extends JdbcDialect {
       case Types.ARRAY =>
         unwrapNullable(typeName) match {
           case (_, arrayTypePattern(nestType)) =>
+            // due to https://github.com/ClickHouse/clickhouse-java/issues/1754, spark is not able to read Arrays of
+            // any types except Decimal(...) and String
             toCatalystType(Types.ARRAY, nestType, size, scale, md).map {
               case (nullable, dataType) => ArrayType(dataType, nullable)
             }
@@ -68,7 +65,7 @@ private object ClickhouseDialectExtension extends JdbcDialect {
       md: MetadataBuilder): Option[(Boolean, DataType)] = {
     val (nullable, _typeName) = unwrapNullable(typeName)
     val dataType = _typeName match {
-      case "String" | "UUID" | fixedStringTypePattern() | enumTypePattern(_) =>
+      case "String" =>
         logger.debug(s"Custom mapping applied: StringType for '${_typeName}'")
         Some(StringType)
       case "Int8" =>
@@ -80,10 +77,10 @@ private object ClickhouseDialectExtension extends JdbcDialect {
       case "UInt16" | "Int32" =>
         logger.debug(s"Custom mapping applied: IntegerType for '${_typeName}'")
         Some(IntegerType)
-      case "UInt32" | "Int64" | "UInt64" | "IPv4" =>
+      case "UInt32" | "Int64" =>
         logger.debug(s"Custom mapping applied: LongType for '${_typeName}'")
         Some(LongType)
-      case "Int128" | "Int256" | "UInt256" =>
+      case "UInt64" | "Int128" | "Int256" | "UInt256" =>
         logger.debug(s"Type '${_typeName}' is not supported")
         None
       case "Float32" =>

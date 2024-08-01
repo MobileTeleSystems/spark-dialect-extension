@@ -47,9 +47,26 @@ trait ClickhouseFixture extends BeforeAndAfterEach { self: Suite =>
 
   override def afterEach(): Unit = {
     val statement = connection.createStatement()
-//    statement.executeUpdate(s"DROP TABLE IF EXISTS $tableName")
+    statement.executeUpdate(s"DROP TABLE IF EXISTS $tableName")
     statement.close()
     connection.close()
     super.afterEach()
+  }
+
+  def getColumnType(columnName: String): String = {
+    val query = s"DESCRIBE TABLE $tableName"
+    val statement = connection.createStatement()
+    val resultSet = statement.executeQuery(query)
+
+    var columnType = ""
+    while (resultSet.next()) {
+      if (resultSet.getString("name") == columnName) {
+        columnType = resultSet.getString("type")
+      }
+    }
+
+    resultSet.close()
+    statement.close()
+    columnType
   }
 }
