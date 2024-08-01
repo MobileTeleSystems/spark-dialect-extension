@@ -238,22 +238,23 @@ class ClickhouseDialectTest
       "([1.23, 2.34, 3.45, 4.56, 5.67])",
       ArrayType(DecimalType(9, 2), containsNull = false)))
 
-  forAll(testReadArrayCases) { (columnDefinition: String, insertedData: String, expectedType: DataType) =>
-    test(s"read ClickHouse Array for ${columnDefinition} column") {
-      setupTable(columnDefinition)
-      insertTestData(Seq(insertedData))
+  forAll(testReadArrayCases) {
+    (columnDefinition: String, insertedData: String, expectedType: DataType) =>
+      test(s"read ClickHouse Array for ${columnDefinition} column") {
+        setupTable(columnDefinition)
+        insertTestData(Seq(insertedData))
 
-      val df = spark.read
-        .format("jdbc")
-        .option("url", jdbcUrl)
-        .option("dbtable", tableName)
-        .load()
+        val df = spark.read
+          .format("jdbc")
+          .option("url", jdbcUrl)
+          .option("dbtable", tableName)
+          .load()
 
-      assert(df.schema.fields.head.dataType === expectedType)
+        assert(df.schema.fields.head.dataType === expectedType)
 
-      df.collect().map(_.getAs[Seq[Any]](df.schema.fields.head.name)).head
-      assert(df.count() == 1)
-    }
+        df.collect().map(_.getAs[Seq[Any]](df.schema.fields.head.name)).head
+        assert(df.count() == 1)
+      }
   }
 
   val testWriteArrayCases: TableFor3[String, Seq[Row], DataType] = Table(
@@ -261,59 +262,62 @@ class ClickhouseDialectTest
     (
       "charArrayColumn Array(String)",
       Seq(Row(Array("a", "b", "c", "d", "e"))),
-      ArrayType(StringType, containsNull = false)
-    ),
+      ArrayType(StringType, containsNull = false)),
     (
       "byteArrayColumn Array(Int8)",
       Seq(Row(Array(1.toByte, 2.toByte, 3.toByte, 4.toByte, 5.toByte))),
-      ArrayType(ByteType, containsNull = false)
-    ),
+      ArrayType(ByteType, containsNull = false)),
     (
       "intArrayColumn Array(Int32)",
       Seq(Row(Array(1, 2, 3, 4, 5))),
-      ArrayType(IntegerType, containsNull = false)
-    ),
+      ArrayType(IntegerType, containsNull = false)),
     (
       "longArrayColumn Array(Int64)",
       Seq(Row(Array(1L, 2L, 3L, 4L, 5L))),
-      ArrayType(LongType, containsNull = false)
-    ),
+      ArrayType(LongType, containsNull = false)),
     (
       "floatArrayColumn Array(Float32)",
       Seq(Row(Array(1.0f, 2.0f, 3.0f, 4.0f, 5.0f))),
-      ArrayType(FloatType, containsNull = false)
-    ),
+      ArrayType(FloatType, containsNull = false)),
     (
       "dateArrayColumn Array(Date)",
-      Seq(Row(Array(java.sql.Date.valueOf("2022-01-01"), java.sql.Date.valueOf("2022-01-02"), java.sql.Date.valueOf("2022-01-03")))),
-      ArrayType(DateType, containsNull = false)
-    ),
+      Seq(
+        Row(
+          Array(
+            java.sql.Date.valueOf("2022-01-01"),
+            java.sql.Date.valueOf("2022-01-02"),
+            java.sql.Date.valueOf("2022-01-03")))),
+      ArrayType(DateType, containsNull = false)),
     (
       "decimalArrayColumn Array(Decimal(9,2))",
-      Seq(Row(Array(new java.math.BigDecimal("1.23"), new java.math.BigDecimal("2.34"), new java.math.BigDecimal("3.45"), new java.math.BigDecimal("4.56"), new java.math.BigDecimal("5.67")))),
-      ArrayType(DecimalType(9, 2), containsNull = false)
-    )
-  )
+      Seq(
+        Row(Array(
+          new java.math.BigDecimal("1.23"),
+          new java.math.BigDecimal("2.34"),
+          new java.math.BigDecimal("3.45"),
+          new java.math.BigDecimal("4.56"),
+          new java.math.BigDecimal("5.67")))),
+      ArrayType(DecimalType(9, 2), containsNull = false)))
 
-  forAll(testWriteArrayCases) { (columnDefinition: String, insertedData: Seq[Row], expectedType: DataType) =>
-    test(s"write ClickHouse Array for $columnDefinition column") {
+  forAll(testWriteArrayCases) {
+    (columnDefinition: String, insertedData: Seq[Row], expectedType: DataType) =>
+      test(s"write ClickHouse Array for $columnDefinition column") {
 
+        val columnName = columnDefinition.split(" ")(0)
+        val schema = StructType(Array(StructField(columnName, expectedType, nullable = false)))
+        val df = spark.createDataFrame(spark.sparkContext.parallelize(insertedData), schema)
 
-      val columnName = columnDefinition.split(" ")(0)
-      val schema = StructType(Array(StructField(columnName, expectedType, nullable = false)))
-      val df = spark.createDataFrame(spark.sparkContext.parallelize(insertedData), schema)
+        df.write
+          .format("jdbc")
+          .option("url", jdbcUrl)
+          .option("dbtable", tableName)
+          .option("user", jdbcUser)
+          .option("password", jdbcPassword)
+          .option("createTableOptions", "ENGINE = TinyLog")
+          .mode("errorIfExists")
+          .save()
 
-      df.write
-        .format("jdbc")
-        .option("url", jdbcUrl)
-        .option("dbtable", tableName)
-        .option("user", jdbcUser)
-        .option("password", jdbcPassword)
-        .option("createTableOptions", "ENGINE = TinyLog")
-        .mode("errorIfExists")
-        .save()
-
-      assert(df.count() == 1)
-    }
+        assert(df.count() == 1)
+      }
   }
 }
