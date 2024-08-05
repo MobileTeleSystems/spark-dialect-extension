@@ -237,7 +237,9 @@ class ClickhouseDialectTest
 
   test("read ClickHouse Float64 as Spark DoubleType") {
     setupTable("doubleColumn Float64")
-    insertTestData(Seq("(-1.7976931348623157E308)", "(1.7976931348623157E308)")) // min and max values for double
+    insertTestData(
+      Seq("(-1.7976931348623157E308)", "(1.7976931348623157E308)")
+    ) // min and max values for double
 
     val df = spark.read
       .format("jdbc")
@@ -248,7 +250,7 @@ class ClickhouseDialectTest
     assert(df.schema.fields.head.dataType == DoubleType)
 
     val data = df.collect().map(_.getDouble(0)).sorted
-    assert(data sameElements Array(-1.7976931348623157E308, 1.7976931348623157E308))
+    assert(data sameElements Array(-1.7976931348623157e308, 1.7976931348623157e308))
   }
 
   test("read ClickHouse Decimal(9,2) as Spark DecimalType") {
@@ -264,10 +266,10 @@ class ClickhouseDialectTest
     assert(df.schema.fields.head.dataType == DecimalType(9, 2))
 
     val data = df.collect().map(_.getDecimal(0)).sorted
-    assert(data sameElements Array(
-      new java.math.BigDecimal("12345.67"),
-      new java.math.BigDecimal("89012.34")
-    ))
+    assert(
+      data sameElements Array(
+        new java.math.BigDecimal("12345.67"),
+        new java.math.BigDecimal("89012.34")))
   }
 
   test("read ClickHouse Decimal32 as Spark DecimalType(9, scale)") {
@@ -283,10 +285,10 @@ class ClickhouseDialectTest
     assert(df.schema.fields.head.dataType == DecimalType(9, 2))
 
     val data = df.collect().map(_.getDecimal(0)).sorted
-    assert(data sameElements Array(
-      new java.math.BigDecimal("12345.67"),
-      new java.math.BigDecimal("89012.34")
-    ))
+    assert(
+      data sameElements Array(
+        new java.math.BigDecimal("12345.67"),
+        new java.math.BigDecimal("89012.34")))
   }
 
   test("read ClickHouse Decimal64 as Spark DecimalType(18, scale)") {
@@ -302,15 +304,16 @@ class ClickhouseDialectTest
     assert(df.schema.fields.head.dataType == DecimalType(18, 2))
 
     val data = df.collect().map(_.getDecimal(0)).sorted
-    assert(data sameElements Array(
-      new java.math.BigDecimal("123456789.12"),
-      new java.math.BigDecimal("987654321.34")
-    ))
+    assert(
+      data sameElements Array(
+        new java.math.BigDecimal("123456789.12"),
+        new java.math.BigDecimal("987654321.34")))
   }
 
   test("read ClickHouse Decimal128 as Spark DecimalType(38, scale)") {
     setupTable("decimalColumn Decimal128(2)")
-    insertTestData(Seq("(123456789012345678901234567890.12)", "(987654321098765432109876543210.34)"))
+    insertTestData(
+      Seq("(123456789012345678901234567890.12)", "(987654321098765432109876543210.34)"))
 
     val df = spark.read
       .format("jdbc")
@@ -321,10 +324,10 @@ class ClickhouseDialectTest
     assert(df.schema.fields.head.dataType == DecimalType(38, 2))
 
     val data = df.collect().map(_.getDecimal(0)).sorted
-    assert(data sameElements Array(
-      new java.math.BigDecimal("123456789012345678901234567890.12"),
-      new java.math.BigDecimal("987654321098765432109876543210.34")
-    ))
+    assert(
+      data sameElements Array(
+        new java.math.BigDecimal("123456789012345678901234567890.12"),
+        new java.math.BigDecimal("987654321098765432109876543210.34")))
   }
 
   test("read ClickHouse Date as Spark DateType") {
@@ -340,7 +343,10 @@ class ClickhouseDialectTest
     assert(df.schema.fields.head.dataType == DateType)
 
     val data = df.collect().map(_.getDate(0))
-    assert(data sameElements Array(java.sql.Date.valueOf("2023-01-01"), java.sql.Date.valueOf("2023-12-31")))
+    assert(
+      data sameElements Array(
+        java.sql.Date.valueOf("2023-01-01"),
+        java.sql.Date.valueOf("2023-12-31")))
   }
 
   test("read ClickHouse DateTime as Spark TimestampType") {
@@ -356,10 +362,10 @@ class ClickhouseDialectTest
     assert(df.schema.fields.head.dataType == TimestampType)
 
     val data = df.collect().map(_.getTimestamp(0))
-    assert(data sameElements Array(
-      java.sql.Timestamp.valueOf("2023-01-01 12:34:56"),
-      java.sql.Timestamp.valueOf("2023-12-31 23:59:59")
-    ))
+    assert(
+      data sameElements Array(
+        java.sql.Timestamp.valueOf("2023-01-01 12:34:56"),
+        java.sql.Timestamp.valueOf("2023-12-31 23:59:59")))
   }
 
   test("write Spark TimestampType as ClickHouse Datetime64(6)") {
