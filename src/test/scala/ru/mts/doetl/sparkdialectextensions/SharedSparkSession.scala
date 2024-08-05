@@ -27,6 +27,7 @@ trait SharedSparkSession extends BeforeAndAfterAll { self: Suite =>
       .appName("Spark Test Session")
       .config("spark.ui.enabled", "false") // disable UI to reduce overhead
       .config("spark.jars", jarPaths) // include the JAR file containing the custom dialect
+      .config("spark.driver.bindAddress", "127.0.0.1")
       .getOrCreate()
 
     // register custom Clickhouse dialect
