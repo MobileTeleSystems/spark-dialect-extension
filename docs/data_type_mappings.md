@@ -4,26 +4,26 @@ This documentation outlines the customized mappings that the Spark Dialect Exten
 
 #### Customized Type Mappings with Spark Dialect Extension
 
-| ClickHouse Type (Read) | Spark Type           | ClickHouse Type (Write) | ClickHouse Type (Create) |
-|------------------------|----------------------|-------------------------|--------------------------|
-| `Bool`                 | `BooleanType`        | `Bool`                  | `Bool`                   |
-| `Int8`                 | `ByteType`           | `Int8`                  | `Int8`                   |
-| `Int16`                | `ShortType`          | `Int16`                 | `Int16`                  |
-| `Int32`                | `IntegerType`        | `Int32`                 | `Int32`                  |
-| `Int64`                | `LongType`           | `Int64`                 | `Int64`                  |
-| `UInt8`                | `ShortType`          | `UInt8`                 | `UInt8`                  |
-| `UInt16`               | `IntegerType`        | `UInt16`                | `UInt16`                 |
-| `UInt32`               | `LongType`           | `Int64`                 | `Int64`                  |
-| `UInt64`               | `DecimalType(20, 0)` | `Decimal(20, 0)`        | `Decimal(20, 0)`         |
-| `Float32`              | `FloatType`          | `Float32`               | `Float32`                |
-| `Float64`              | `DoubleType`         | `Float64`               | `Float64`                |
-| `Decimal(M, N)`        | `DecimalType(M, N)`  | `Decimal(M, N)`         | `Decimal(M, N)`          |
-| `Decimal32(N)`         | `DecimalType(M, N)`  | `Decimal32(M, N)`       | `Decimal32(M, N)`        |
-| `Decimal64(N)`         | `DecimalType(M, N)`  | `Decimal64(M, N)`       | `Decimal64(M, N)`        |
-| `Decimal128(N)`        | `DecimalType(M, N)`  | `Decimal128(M, N)`      | `Decimal128(M, N)`       |
-| `Decimal256(N)`        | unsupported          | unsupported             | unsupported              |
-| `DateTime`             | `TimestampType`      | `DateTime`              | `DateTime`               |
-| `Datetime64(6)`        | `TimestampType`      | `Datetime64(6)`         | `Datetime64(6)`          |
+| ClickHouse Type (Read) | Spark Type           | ClickHouse Type (Write) | ClickHouse Type (Create)                        |
+|------------------------|----------------------|-------------------------|-------------------------------------------------|
+| `Bool`                 | `BooleanType`        | `Bool`                  | `Bool (Spark's default is UInt64)`              |
+| `Int8`                 | `ByteType`           | `Int8`                  | `Int8 (Spark's default is Int32)`               |
+| `Int16`                | `ShortType`          | `Int16`                 | `Int16 (Spark's default is Int32)`              |
+| `Int32`                | `IntegerType`        | `Int32`                 | `Int32`                                         |
+| `Int64`                | `LongType`           | `Int64`                 | `Int64`                                         |
+| `UInt8`                | `ShortType`          | `UInt8`                 | `UInt8`                                         |
+| `UInt16`               | `IntegerType`        | `UInt16`                | `UInt16`                                        |
+| `UInt32`               | `LongType`           | `Int64`                 | `Int64 (Spark's default is Decimal(20, 0))`     |
+| `UInt64`               | `DecimalType(20, 0)` | `Decimal(20, 0)`        | `Decimal(20, 0)`                                |
+| `Float32`              | `FloatType`          | `Float32`               | `Float32`                                       |
+| `Float64`              | `DoubleType`         | `Float64`               | `Float64`                                       |
+| `Decimal(M, N)`        | `DecimalType(M, N)`  | `Decimal(M, N)`         | `Decimal(M, N)`                                 |
+| `Decimal32(N)`         | `DecimalType(M, N)`  | `Decimal32(M, N)`       | `Decimal32(M, N)`                               |
+| `Decimal64(N)`         | `DecimalType(M, N)`  | `Decimal64(M, N)`       | `Decimal64(M, N)`                               |
+| `Decimal128(N)`        | `DecimalType(M, N)`  | `Decimal128(M, N)`      | `Decimal128(M, N)`                              |
+| `Decimal256(N)`        | unsupported          | unsupported             | unsupported                                     |
+| `DateTime`             | `TimestampType`      | `DateTime`              | `DateTime`                                      | 
+| `DateTime64(6)`        | `TimestampType`      | `DateTime64(6)`         | `DateTime64(6) (Spark's default is DateTime32)` |
 
 
 ``Array(T)`` `->` ``ArrayType(T)``:
@@ -41,29 +41,4 @@ This documentation outlines the customized mappings that the Spark Dialect Exten
 | unsupported            | `ArrayType(DoubleType)`        | unsupported             | unsupported              |
 
 
-#### Default Type Mappings without Spark Dialect Extension
-
-| ClickHouse Type (Read) | Spark Type           | ClickHouse Type (Write) | ClickHouse Type (Create) |
-|------------------------|----------------------|-------------------------|--------------------------|
-| `Bool`                 | `BooleanType`        | `Bool`                  | `UInt64`                 |
-| `Int8`                 | `IntegerType`        | `Int32`                 | `Int32`                  |
-| `Int16`                | `IntegerType`        | `Int32`                 | `Int32`                  |
-| `Int32`                | `IntegerType`        | `Int32`                 | `Int32`                  |
-| `Int64`                | `LongType`           | `Int64`                 | `Int64`                  |
-| `UInt8`                | `IntegerType`        | `UInt8`                 | `UInt8`                  |
-| `UInt16`               | `IntegerType`        | `UInt16`                | `UInt16`                 |
-| `UInt32`               | `DecimalType(20, 0)` | `Decimal(20, 0)`        | `Decimal(20, 0)`         |
-| `UInt64`               | `DecimalType(20, 0)` | `Decimal(20, 0)`        | `Decimal(20, 0)`         |
-| `Float32`              | `FloatType`          | `Float32`               | `Float32`                |
-| `Float64`              | `DoubleType`         | `Float64`               | `Float64`                |
-| `Decimal(M, N)`        | `DecimalType(M, N)`  | `Decimal(M, N)`         | `Decimal(M, N)`          |
-| `Decimal32(N)`         | `DecimalType(M, N)`  | `Decimal32(M, N)`       | `Decimal32(M, N)`        |
-| `Decimal64(N)`         | `DecimalType(M, N)`  | `Decimal64(M, N)`       | `Decimal64(M, N)`        |
-| `Decimal128(N)`        | `DecimalType(M, N)`  | `Decimal128(M, N)`      | `Decimal128(M, N)`       |
-| `Decimal256(N)`        | unsupported          | unsupported             | unsupported              |
-| `DateTime`             | `TimestampType`      | `DateTime`              | `DateTime`               |
-| `Datetime64(6)`        | `TimestampType`      | `Datetime64(6)`         | `DateTime32`             |
-
-``Array(T)`` `->` ``ArrayType(T)``:
-
-**unsupported**
+#### By Default Array Type Mappings without Spark Dialect Extension is not supported
