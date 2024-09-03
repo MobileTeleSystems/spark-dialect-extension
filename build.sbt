@@ -1,9 +1,8 @@
 name := "spark-dialect-extension"
 
-organization := "ru.mts.doetl"
+organization := "io.github.mtsongithub.doetl"
 organizationName := "Mobile Telesystems"
 
-version := "0.1"
 // minimum compatible version with scalafix
 scalaVersion := "2.12.19"
 
@@ -14,6 +13,9 @@ homepage := Some(url("https://theplatform.ru/platforms/dataops"))
 startYear := Some(2024)
 
 licenses += "Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
+
+sonatypeCredentialHost := "s01.oss.sonatype.org"
+sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
 
 inThisBuild(List(

@@ -1,4 +1,4 @@
-package ru.mts.doetl.sparkdialectextensions.clickhouse
+package io.github.mtsongithub.doetl.sparkdialectextensions.clickhouse
 
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}

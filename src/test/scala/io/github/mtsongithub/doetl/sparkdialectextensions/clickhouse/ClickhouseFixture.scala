@@ -1,4 +1,4 @@
-package ru.mts.doetl.sparkdialectextensions.clickhouse
+package io.github.mtsongithub.doetl.sparkdialectextensions.clickhouse
 
 import io.github.cdimascio.dotenv.Dotenv
 import org.scalatest.{BeforeAndAfterEach, Suite}

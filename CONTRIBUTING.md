@@ -71,3 +71,55 @@ To lint and refactor the code, run Scalafix using the following command:
 sbt scalafixAll
 ```
 This command checks the code against various rules specified in the ```.scalafix.conf``` file and applies fixes where possible.
+
+
+## Release process
+
+
+1. Checkout to ``develop`` branch and update it to the actual state
+
+```bash
+git checkout develop
+git pull -p
+```
+
+2. Copy version (it must start with **v**, e.g. **v1.0.0**)
+
+```bash
+VERSION=$(cat VERSION)
+```
+
+3. Commit and push changes to ``develop`` branch
+
+```bash
+git add .
+git commit -m "Prepare for release ${VERSION}"
+git push
+```
+
+4. Merge ``develop`` branch to ``master``, **WITHOUT** squashing
+
+```bash
+git checkout master
+git pull
+git merge develop
+git push
+```
+
+5. Add git tag to the latest commit in ``master`` branch
+
+```bash
+git tag "$VERSION"
+git push origin "$VERSION"
+```
+
+6. Update version in ``develop`` branch **after release**:
+
+```bash
+git checkout develop
+NEXT_VERSION=$(echo "$VERSION" | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
+echo "$NEXT_VERSION" > VERSION
+git add .
+git commit -m "Bump version"
+git push
+```
