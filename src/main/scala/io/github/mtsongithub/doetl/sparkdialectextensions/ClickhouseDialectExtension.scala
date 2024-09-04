@@ -1,4 +1,4 @@
-package ru.mts.doetl.sparkdialectextensions
+package io.github.mtsongithub.doetl.sparkdialectextensions
 
 import scala.util.matching.Regex
 import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcType}

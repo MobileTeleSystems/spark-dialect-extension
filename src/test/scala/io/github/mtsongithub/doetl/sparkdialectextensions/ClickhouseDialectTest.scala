@@ -1,4 +1,4 @@
-package ru.mts.doetl.sparkdialectextensions
+package io.github.mtsongithub.doetl.sparkdialectextensions
 
 import org.scalatest.prop.{TableDrivenPropertyChecks, TableFor3}
 import org.scalatest.funsuite.AnyFunSuite
@@ -7,7 +7,7 @@ import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.sql.types.Metadata
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
-import ru.mts.doetl.sparkdialectextensions.clickhouse.{ClickhouseDataframeGenerator, ClickhouseFixture}
+import io.github.mtsongithub.doetl.sparkdialectextensions.clickhouse.{ClickhouseDataframeGenerator, ClickhouseFixture}
 
 class ClickhouseDialectTest
     extends AnyFunSuite

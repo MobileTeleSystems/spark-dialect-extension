@@ -1,4 +1,4 @@
-package ru.mts.doetl.sparkdialectextensions
+package io.github.mtsongithub.doetl.sparkdialectextensions
 
 import org.apache.spark.sql.SparkSession
 import org.scalatest.BeforeAndAfterAll
