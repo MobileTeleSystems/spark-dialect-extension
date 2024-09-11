@@ -1,13 +1,14 @@
-package io.github.mtsongithub.doetl.sparkdialectextensions
+package io.github.mtsongithub.doetl.sparkdialectextensions.clickhouse
 
-import org.scalatest.prop.{TableDrivenPropertyChecks, TableFor3}
+import io.github.mtsongithub.doetl.sparkdialectextensions.SharedSparkSession
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.SparkSession
+import org.mockito.Mockito._
+import org.apache.spark.sql.jdbc.JdbcDialects
+import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import org.apache.spark.sql.jdbc.JdbcDialects
-import org.apache.spark.sql.types.Metadata
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.types._
-import io.github.mtsongithub.doetl.sparkdialectextensions.clickhouse.{ClickhouseDataframeGenerator, ClickhouseFixture}
+import org.scalatest.prop.{TableDrivenPropertyChecks, TableFor3}
 
 class ClickhouseDialectTest
     extends AnyFunSuite
@@ -28,6 +29,26 @@ class ClickhouseDialectTest
   test("custom clickhouse dialect usage") {
     val dialect = JdbcDialects.get("jdbc:clickhouse")
     assert(dialect.getClass.getName.contains("ClickhouseDialectExtension"))
+  }
+
+  test("throws exception for unsupported spark version") {
+    val originalSession = SparkSession.getActiveSession
+
+    // mock the SparkSession to return version 3.4
+    val mockSparkSession = mock(classOf[SparkSession])
+    when(mockSparkSession.version).thenReturn("3.4.0")
+    SparkSession.setActiveSession(mockSparkSession)
+
+    try {
+      val exception = intercept[UnsupportedOperationException] {
+        ClickhouseDialectRegistry.register()
+      }
+      // check the exception message
+      exception.getMessage should include("Unsupported Spark version: 3.4.0")
+    } finally {
+      // restore the original session after the test
+      SparkSession.setActiveSession(originalSession.orNull)
+    }
   }
 
   test("test clickHouse table read with spark") {

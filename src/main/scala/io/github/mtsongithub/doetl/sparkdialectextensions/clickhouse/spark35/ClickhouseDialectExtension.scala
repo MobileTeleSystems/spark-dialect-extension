@@ -1,11 +1,11 @@
-package io.github.mtsongithub.doetl.sparkdialectextensions
+package io.github.mtsongithub.doetl.sparkdialectextensions.clickhouse.spark35
 
-import scala.util.matching.Regex
+import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils
 import org.apache.spark.sql.jdbc.{JdbcDialect, JdbcType}
-import org.apache.spark.sql.execution.datasources.jdbc.{JdbcUtils}
 import org.apache.spark.sql.types._
 import org.slf4j.LoggerFactory
 import java.sql.Types
+import scala.util.matching.Regex
 
 private object ClickhouseDialectExtension extends JdbcDialect {
 
