@@ -4,7 +4,7 @@ This section provides instructions on how to configure Apache Spark to use the S
 
 ### Configuration Steps
 
-To integrate the Spark Dialect Extension into your Spark application, you need to add the compiled JAR file to the Spark classpath. This enables Spark to utilize the custom JDBC dialect for enhanced data type handling.
+To integrate the Spark Dialect Extension into your Spark application, you need to add the compiled JAR file to the Spark classpath. The extension, via ``<DBMS>DialectRegistry`` classes, will dynamically detect the Spark version and load the corresponding dialect.
 
 #### Add the JAR to Spark
 
@@ -19,13 +19,14 @@ To integrate the Spark Dialect Extension into your Spark application, you need t
 
 - **Programmatically** (within your Spark application):
   ```scala
-  import org.apache.spark.sql.jdbc.JdbcDialects
-      
+  import io.github.mtsongithub.doetl.sparkdialectextensions.clickhouse.ClickhouseDialectRegistry
+  import org.apache.spark.sql.SparkSession
+  
   val spark = SparkSession.builder()
-    .appName("My Spark App")
-    .config("spark.jars", "/path/to/spark-dialect-extension_2.12-0.1.jar")
-    .getOrCreate()
-      
-  // register custom Clickhouse dialect
-  JdbcDialects.registerDialect(ClickhouseDialectExtension)
+  .appName("My Spark App")
+  .config("spark.jars", "/path/to/spark-dialect-extension_2.12-0.1.jar")
+  .getOrCreate()
+  
+  // Register custom Clickhouse dialect based on Spark version
+  ClickhouseDialectRegistry.register()
   ```

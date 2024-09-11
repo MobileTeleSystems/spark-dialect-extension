@@ -36,6 +36,7 @@ libraryDependencies ++= Seq(
 // test dependencies
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.2.19" % "test",
+  "org.mockito" %% "mockito-scala" % "1.17.37" % "test",
   // latest compatible with Java 8
   "io.github.cdimascio" % "dotenv-java" % "2.3.2" % "test",
 

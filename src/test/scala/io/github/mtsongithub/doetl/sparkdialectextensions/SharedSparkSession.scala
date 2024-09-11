@@ -3,7 +3,7 @@ package io.github.mtsongithub.doetl.sparkdialectextensions
 import org.apache.spark.sql.SparkSession
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Suite
-import org.apache.spark.sql.jdbc.JdbcDialects
+import io.github.mtsongithub.doetl.sparkdialectextensions.clickhouse.ClickhouseDialectRegistry
 
 import java.nio.file.Paths
 
@@ -31,7 +31,7 @@ trait SharedSparkSession extends BeforeAndAfterAll { self: Suite =>
       .getOrCreate()
 
     // register custom Clickhouse dialect
-    JdbcDialects.registerDialect(ClickhouseDialectExtension)
+    ClickhouseDialectRegistry.register()
 
     afterSessionCreated()
   }
