@@ -14,9 +14,9 @@ startYear := Some(2024)
 
 licenses += "Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
 
-sonatypeCredentialHost := "s01.oss.sonatype.org"
-sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+import xerial.sbt.Sonatype.sonatypeCentralHost
 
+sonatypeCredentialHost := sonatypeCentralHost
 
 inThisBuild(List(
   semanticdbEnabled := true, // enable SemanticDB
