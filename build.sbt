@@ -1,7 +1,7 @@
 name := "spark-dialect-extension"
 
 organization := "io.github.mtsongithub.doetl"
-organizationName := "Mobile Telesystems"
+organizationName := "MTS PJSC"
 
 // minimum compatible version with scalafix
 scalaVersion := "2.12.19"
@@ -12,7 +12,7 @@ homepage := Some(url("https://theplatform.ru/platforms/dataops"))
 
 startYear := Some(2024)
 
-licenses += "Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
+licenses += "Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
 
 import xerial.sbt.Sonatype.sonatypeCentralHost
 

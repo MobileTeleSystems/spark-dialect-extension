@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2024 MTS PJSC
+// SPDX-License-Identifier: Apache-2.0
 package io.github.mtsongithub.doetl.sparkdialectextensions.clickhouse.spark35
 
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils
