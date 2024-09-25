@@ -1,8 +1,6 @@
-version: '3.9'
-
 # NOTE: local development only
 services:
-  clickhouse:
+  test-clickhouse:
     image: ${CLICKHOUSE_IMAGE:-clickhouse/clickhouse-server:latest-alpine}
     restart: unless-stopped
     ports:

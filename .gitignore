@@ -3,19 +3,6 @@
 *.log
 *~
 
-# sbt specific
-dist/*
-target/
-lib_managed/
-src_managed/
-project/boot/
-project/plugins/project/
-project/local-plugins.sbt
-.history
-.bsp
-.metals
-.bloop
-
 # Scala-IDE specific
 .scala_dependencies
 .cache
@@ -35,3 +22,7 @@ classes/
 
 # Visual Studio Code
 .vscode
+
+# Gradle-specific
+.gradle/
+build/
