@@ -18,7 +18,12 @@ trait SharedSparkSession extends BeforeAndAfterAll { self: Suite =>
     val scalaVersion: String = scala.util.Properties.versionNumberString
     val majorScalaVersion: String = scalaVersion.split('.').take(2).mkString(".")
     val jarFiles =
-      Paths.get("target", s"scala-$majorScalaVersion").toFile.listFiles().filter(_.isFile)
+      Paths
+        .get("build", "libs")
+        .toFile
+        .listFiles()
+        .filter(_.getName.contains(s"_$majorScalaVersion-"))
+        .filter(_.isFile)
     val jarPaths = jarFiles.map(_.getAbsolutePath).mkString(",")
 
     _spark = SparkSession
@@ -27,7 +32,6 @@ trait SharedSparkSession extends BeforeAndAfterAll { self: Suite =>
       .appName("Spark Test Session")
       .config("spark.ui.enabled", "false") // disable UI to reduce overhead
       .config("spark.jars", jarPaths) // include the JAR file containing the custom dialect
-      .config("spark.driver.bindAddress", "127.0.0.1")
       .getOrCreate()
 
     // register custom Clickhouse dialect

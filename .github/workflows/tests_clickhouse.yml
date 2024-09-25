@@ -24,36 +24,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cache SBT
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.ivy2/cache
-            ~/.sbt
-          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
-
-      - name: Setup JDK 8
+      - name: Setup JDK 11
         uses: actions/setup-java@v4
         with:
-          java-version: '8'
+          java-version: '11'
           distribution: 'temurin'
 
-      - name: Setup Scala and SBT
-        uses: olafurpg/setup-scala@v14
-        with:
-          java-version: '8'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
-      - name: Compile .jar package with SBT
-        run: |
-          sbt package
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: false
+          cache-overwrite-existing: true
 
       - name: Run Integration Tests with Coverage
         run: |
-          sbt clean coverage test coverageReport
+          ./gradlew test
 
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: target/scala-2.12/scoverage-report/scoverage.xml
+          files: build/reports/jacoco/test/*.xml
           fail_ci_if_error: true
