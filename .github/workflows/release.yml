@@ -42,4 +42,4 @@ jobs:
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
-            build/libs/*.jar
+            build/libs/spark-dialect-extension*.jar
