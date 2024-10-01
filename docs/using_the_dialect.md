@@ -2,95 +2,99 @@
 
 This section provides instructions on how to configure Apache Spark to use the Spark Dialect Extension, enabling custom handling of JDBC data types.
 
-### Add the JAR to Spark
+### Using onETL with PySpark
 
-#### Using release version
-
-##### Using SparkConf
-
-For PySpark:
+See [onETL documentation](https://onetl.readthedocs.io) for installation instructions.
 
 ```python
 from pyspark.sql import SparkSession
+from onetl.connection import Clickhouse
 
+# describe packages should be loaded by Spark
+maven_packages = [
+  "io.github.mtsongithub.doetl:spark-dialect-extension_2.12:0.0.1",
+  *Clickhouse.get_packages(),
+]
+
+# Create Spark session
 spark = (
   SparkSession.builder
   .appName("My Spark App")
-  .config("spark.jars.packages", "io.github.mtsongithub.doetl:spark-dialect-extension_2.12:0.0.1")
+  .config("spark.jars.packages", ",".join(maven_packages))
   .getOrCreate()
 )
+
+# Register custom Clickhouse dialect
+ClickhouseDialectRegistry = spark._jvm.io.github.mtsongithub.doetl.sparkdialectextensions.clickhouse.ClickhouseDialectRegistry
+ClickhouseDialectRegistry.register()
+
+
+# use onETL to interact with Clickhouse
+clickhouse = Clickhouse(
+  host="my.clickhouse.hostname.or.ip",
+  port=9000,
+  user="someuser",
+  password="******",
+  spark=spark,
+)
+
+from onetl.db import DBReader, DBWriter
+
+# onETL now can properly read some Clickhouse types
+reader = DBReader(connection=clickhouse, source="mytable")
+df = reader.run()
+
+# onETL now can properly write some Clickhouse types
+writer = DBWriter(connection=clickhouse, target="anothertable")
+writer.run(df)
 ```
 
-For Spark on Scala:
+### Using Spark on Scala
 
 ```scala
 import org.apache.spark.sql.SparkSession
 
-val spark = SparkSession.builder()
-.appName("My Spark App")
-.config("spark.jars.packages", "io.github.mtsongithub.doetl:spark-dialect-extension_2.12:0.0.1")
-.getOrCreate()
-```
-
-##### Using Spark Submit
-
-```bash
-spark-submit --conf spark.jars.packages=io.github.mtsongithub.doetl:spark-dialect-extension_2.12:0.0.1
-```
-
-#### Compile from source
-
-##### Build .jar file
-
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for build instructions.
-
-After build you'll have a file `/path/to/cloned-repo/target/scala_2.12/spark-dialect-extension_2.12-0.0.1.jar`
-
-##### Using SparkConf
-
-For PySpark:
-
-```python
-from pyspark.sql import SparkSession
-
-spark = (
-  SparkSession.builder
-  .appName("My Spark App")
-  .config("spark.jars", "/path/to/cloned-repo/target/scala_2.12/spark-dialect-extension_2.12-0.0.1.jar")
-  .getOrCreate()
+// describe packages should be loaded by Spark
+var maven_packages = Array(
+  "io.github.mtsongithub.doetl:spark-dialect-extension_2.12:0.0.1",
+  "com.clickhouse:clickhouse-jdbc:0.6.5",
+  "com.clickhouse:clickhouse-http-client:0.6.5",
+  "org.apache.httpcomponents.client5:httpclient5::5.3.1",
 )
-```
-
-For Spark on Scala:
-
-```scala
-import org.apache.spark.sql.SparkSession
 
 val spark = SparkSession.builder()
 .appName("My Spark App")
-.config("spark.jars", "/path/to/cloned-repo/target/scala_2.12/spark-dialect-extension_2.12-0.0.1.jar")
+.config("spark.jars.packages", maven_packages.mkString(","))
 .getOrCreate()
+
+// Register custom Clickhouse dialect
+import io.github.mtsongithub.doetl.sparkdialectextensions.clickhouse.ClickhouseDialectRegistry
+
+ClickhouseDialectRegistry.register()
+
+// now Spark can properly handle some Clickhouse types during read & write
+df = spark.read.jdbc.options(...).load()
+df.write.jdbc.options(...).saveAsTable("anothertable")
 ```
 
-##### Using Spark Submit
+### Using Spark Submit
+
+Start Spark session with downloaded packages:
 
 ```bash
-spark-submit --jars /path/to/cloned-repo/target/scala_2.12/spark-dialect-extension_2.12-0.0.1.jar
+spark-submit --conf spark.jars.packages=io.github.mtsongithub.doetl:spark-dialect-extension_2.12:0.0.1,com.clickhouse:clickhouse-jdbc:0.6.5,com.clickhouse:clickhouse-http-client:0.6.5,org.apache.httpcomponents.client5:httpclient5::5.3.1 ...
 ```
 
-### Register a dialect
-
-To integrate the Spark Dialect Extension into your Spark application, you need to use ``<DBMS>DialectRegistry`` classes, which dynamically detect the Spark version and register the corresponding dialect.
+And then register custom dialect in started session.
 
 For PySpark:
-
 ```python
 # Register custom Clickhouse dialect
 ClickhouseDialectRegistry = spark._jvm.io.github.mtsongithub.doetl.sparkdialectextensions.clickhouse.ClickhouseDialectRegistry
 ClickhouseDialectRegistry.register()
 ```
 
-For Spark on Scala:
+For Scala:
 ```scala
 // Register custom Clickhouse dialect
 import io.github.mtsongithub.doetl.sparkdialectextensions.clickhouse.ClickhouseDialectRegistry

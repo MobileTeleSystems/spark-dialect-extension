@@ -4,6 +4,8 @@ This documentation outlines the customized mappings that the Spark Dialect Exten
 
 #### Customized Type Mappings with Spark Dialect Extension
 
+Primitive types:
+
 | ClickHouse Type (Read) | Spark Type           | ClickHouse Type (Write) | ClickHouse Type (Create)                        |
 |------------------------|----------------------|-------------------------|-------------------------------------------------|
 | `Bool`                 | `BooleanType`        | `Bool`                  | `Bool (Spark's default is UInt64)`              |
@@ -26,7 +28,7 @@ This documentation outlines the customized mappings that the Spark Dialect Exten
 | `DateTime64(6)`        | `TimestampType`      | `DateTime64(6)`         | `DateTime64(6) (Spark's default is DateTime32)` |
 
 
-``Array(T)`` `->` ``ArrayType(T)``:
+``Array(T)`` `->` ``ArrayType(T)`` (without this extension Spark does not support Arrays for GenericJDBC dialect):
 
 | ClickHouse Type (Read) | Spark Type                     | ClickHouse Type (Write) | ClickHouse Type (Create) |
 |------------------------|--------------------------------|-------------------------|--------------------------|
@@ -39,6 +41,3 @@ This documentation outlines the customized mappings that the Spark Dialect Exten
 | unsupported            | `ArrayType(Date)`              | `Array(Date)`           | `Array(Date)`            |
 | unsupported            | `ArrayType(FloatType)`         | `Array(Float32)`        | `Array(Float32)`         |
 | unsupported            | `ArrayType(DoubleType)`        | unsupported             | unsupported              |
-
-
-#### By Default Array Type Mappings without Spark Dialect Extension is not supported
