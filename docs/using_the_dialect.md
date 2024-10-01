@@ -74,7 +74,7 @@ ClickhouseDialectRegistry.register()
 
 // now Spark can properly handle some Clickhouse types during read & write
 df = spark.read.jdbc.options(...).load()
-df.write.jdbc.options(...).saveAsTable("anothertable")
+df.write.jdbc.options(...).save()
 ```
 
 ### Using Spark Submit
