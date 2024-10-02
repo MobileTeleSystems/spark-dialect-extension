@@ -12,7 +12,7 @@ from onetl.connection import Clickhouse
 
 # describe packages should be loaded by Spark
 maven_packages = [
-  "io.github.mtsongithub.doetl:spark-dialect-extension_2.12:0.0.1",
+  "io.github.mtsongithub.doetl:spark-dialect-extension_2.12:0.0.2",
   *Clickhouse.get_packages(),
 ]
 
@@ -56,7 +56,7 @@ import org.apache.spark.sql.SparkSession
 
 // describe packages should be loaded by Spark
 var maven_packages = Array(
-  "io.github.mtsongithub.doetl:spark-dialect-extension_2.12:0.0.1",
+  "io.github.mtsongithub.doetl:spark-dialect-extension_2.12:0.0.2",
   "com.clickhouse:clickhouse-jdbc:0.6.5",
   "com.clickhouse:clickhouse-http-client:0.6.5",
   "org.apache.httpcomponents.client5:httpclient5::5.3.1",
@@ -82,7 +82,7 @@ df.write.jdbc.options(...).save()
 Start Spark session with downloaded packages:
 
 ```bash
-spark-submit --conf spark.jars.packages=io.github.mtsongithub.doetl:spark-dialect-extension_2.12:0.0.1,com.clickhouse:clickhouse-jdbc:0.6.5,com.clickhouse:clickhouse-http-client:0.6.5,org.apache.httpcomponents.client5:httpclient5::5.3.1 ...
+spark-submit --conf spark.jars.packages=io.github.mtsongithub.doetl:spark-dialect-extension_2.12:0.0.2,com.clickhouse:clickhouse-jdbc:0.6.5,com.clickhouse:clickhouse-http-client:0.6.5,org.apache.httpcomponents.client5:httpclient5::5.3.1 ...
 ```
 
 And then register custom dialect in started session.
