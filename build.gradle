@@ -15,7 +15,7 @@ plugins {
 group = "io.github.mtsongithub.doetl"
 // TODO: crossbuild for Scala 2.13
 archivesBaseName = "spark-dialect-extension_2.12"
-version = "0.0.1"
+version = "0.0.2"
 
 repositories {
     mavenCentral()
