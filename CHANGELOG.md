@@ -1,7 +1,7 @@
 ## 0.0.2 (2024-10-02)
 
-* Allow writing ``ArrayType(TimestampType())` Spark column as Clickhouse's `Array(DateTime64(6))`.
-* Allow writing ``ArrayType(ShortType())` Spark column as Clickhouse's `Array(Int16)`.
+* Allow writing `ArrayType(TimestampType())` Spark column as Clickhouse's `Array(DateTime64(6))`.
+* Allow writing `ArrayType(ShortType())` Spark column as Clickhouse's `Array(Int16)`.
 
 ## 0.0.1 (2024-10-01)
 
