@@ -1,14 +1,15 @@
 package io.github.mtsongithub.doetl.sparkdialectextensions.clickhouse
 
 import io.github.mtsongithub.doetl.sparkdialectextensions.SharedSparkSession
+import org.mockito.Mockito._
+import org.apache.spark.SparkException
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
-import org.mockito.Mockito._
 import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.prop.{TableDrivenPropertyChecks, TableFor3}
+import org.scalatest.prop.TableDrivenPropertyChecks
 
 class ClickhouseDialectTest
     extends AnyFunSuite
@@ -444,7 +445,7 @@ class ClickhouseDialectTest
     statement.close()
   }
 
-  val testReadArrayCases: TableFor3[String, String, DataType] = Table(
+  val testReadArrayCases = Table(
     ("columnDefinition", "insertedData", "expectedType"),
     (
       "charArrayColumn Array(String)",
@@ -474,6 +475,69 @@ class ClickhouseDialectTest
       }
   }
 
+  val testReadArrayUnsupportedCases = Table(
+    ("columnDefinition", "insertedData", "expectedType", "errorMessage"),
+    // https://github.com/ClickHouse/clickhouse-java/issues/1754
+    (
+      "byteArrayColumn Array(Int8)",
+      "([1, 2, 3, 4, 5])",
+      ArrayType(ByteType, containsNull = false),
+      "class [B cannot be cast to class [Ljava.lang.Object;"),
+    (
+      "shortArrayColumn Array(Int16)",
+      "([1, 2, 3, 4, 5])",
+      ArrayType(ShortType, containsNull = false),
+      "class [S cannot be cast to class [Ljava.lang.Object;"),
+    (
+      "intArrayColumn Array(Int32)",
+      "([1, 2, 3, 4, 5])",
+      ArrayType(IntegerType, containsNull = false),
+      "class [I cannot be cast to class [Ljava.lang.Object;"),
+    (
+      "longArrayColumn Array(Int64)",
+      "([1, 2, 3, 4, 5])",
+      ArrayType(LongType, containsNull = false),
+      "class [J cannot be cast to class [Ljava.lang.Object"),
+    // https://github.com/ClickHouse/clickhouse-java/issues/1409
+    (
+      "dateArrayColumn Array(Date)",
+      "(['2024-01-01', '2024-01-02', '2024-01-03'])",
+      ArrayType(DateType, containsNull = false),
+      "class [Ljava.time.LocalDate; cannot be cast to class [Ljava.sql.Date;"),
+    (
+      "datetimeArrayColumn Array(DateTime64(6))",
+      "(['2024-01-01T00:00:00.000000', '2024-01-02T11:11:11.111111', '2024-01-03.2222222'])",
+      ArrayType(TimestampType, containsNull = false),
+      "class [Ljava.time.LocalDateTime; cannot be cast to class [Ljava.sql.Timestamp;"))
+
+  forAll(testReadArrayUnsupportedCases) {
+    (
+        columnDefinition: String,
+        insertedData: String,
+        expectedType: DataType,
+        errorMessage: String) =>
+      test(s"cannot read ClickHouse Array for ${columnDefinition} column") {
+        setupTable(columnDefinition)
+        insertTestData(Seq(insertedData))
+
+        // schema is detected properly
+        val df = spark.read
+          .format("jdbc")
+          .option("url", jdbcUrl)
+          .option("dbtable", tableName)
+          .load()
+
+        assert(df.schema.fields.head.dataType === expectedType)
+
+        // but read is failing
+        val exception = intercept[SparkException] {
+          df.collect()
+        }
+        // check the exception message
+        exception.getMessage should include(errorMessage)
+      }
+  }
+
   val testWriteArrayCases = Table(
     ("columnName", "insertedData", "expectedType", "expectedClickhouseType"),
     (
@@ -486,6 +550,11 @@ class ClickhouseDialectTest
       Seq(Row(Array(1.toByte, 2.toByte, 3.toByte, 4.toByte, 5.toByte))),
       ArrayType(ByteType, containsNull = false),
       "Array(Int8)"),
+    (
+      "shortArrayColumn",
+      Seq(Row(Array(1.toShort, 2.toShort, 3.toShort, 4.toShort, 5.toShort))),
+      ArrayType(ShortType, containsNull = false),
+      "Array(Int16)"),
     (
       "intArrayColumn",
       Seq(Row(Array(1, 2, 3, 4, 5))),
@@ -502,15 +571,10 @@ class ClickhouseDialectTest
       ArrayType(FloatType, containsNull = false),
       "Array(Float32)"),
     (
-      "dateArrayColumn",
-      Seq(
-        Row(
-          Array(
-            java.sql.Date.valueOf("2022-01-01"),
-            java.sql.Date.valueOf("2022-01-02"),
-            java.sql.Date.valueOf("2022-01-03")))),
-      ArrayType(DateType, containsNull = false),
-      "Array(Date)"),
+      "doubleArrayColumn",
+      Seq(Row(Array(1.0d, 2.0d, 3.0d, 4.0d, 5.0d))),
+      ArrayType(DoubleType, containsNull = false),
+      "Array(Float64)"),
     (
       "decimalArrayColumn",
       Seq(
@@ -521,7 +585,26 @@ class ClickhouseDialectTest
           new java.math.BigDecimal("4.56"),
           new java.math.BigDecimal("5.67")))),
       ArrayType(DecimalType(9, 2), containsNull = false),
-      "Array(Decimal(9, 2))"))
+      "Array(Decimal(9, 2))"),
+    (
+      "dateArrayColumn",
+      Seq(
+        Row(
+          Array(
+            java.sql.Date.valueOf("2022-01-01"),
+            java.sql.Date.valueOf("2022-01-02"),
+            java.sql.Date.valueOf("2022-01-03")))),
+      ArrayType(DateType, containsNull = false),
+      "Array(Date)"),
+    (
+      "datetimeArrayColumn",
+      Seq(
+        Row(Array(
+          java.sql.Timestamp.valueOf("2022-01-01 00:00:00.000000"),
+          java.sql.Timestamp.valueOf("2022-01-02 11:11:11.111111"),
+          java.sql.Timestamp.valueOf("2022-01-03 22:22:22.222222")))),
+      ArrayType(TimestampType, containsNull = false),
+      "Array(DateTime64(6))"))
 
   forAll(testWriteArrayCases) {
     (

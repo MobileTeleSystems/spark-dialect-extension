@@ -13,10 +13,10 @@ private object ClickhouseDialectExtension extends JdbcDialect {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private val arrayTypePattern: Regex = """^Array\((.*)\)$""".r
-  private val nullableTypePattern: Regex = """^Nullable\((.*)\)$""".r
+  private val arrayTypePattern: Regex = """(?i)^Array\((.*)\)$""".r
+  private val nullableTypePattern: Regex = """(?i)^Nullable\((.*)\)$""".r
   private val dateTypePattern: Regex = """(?i)^Date$""".r
-  private val dateTimeTypePattern: Regex = """(?i)^DateTime(64)?(\((.*)\))?$""".r
+  private val dateTimeTypePattern: Regex = """(?i)^DateTime(\d+)?(?:\((\d+)\))?$""".r
   private val decimalTypePattern: Regex = """(?i)^Decimal\((\d+),\s*(\d+)\)$""".r
   private val decimalTypePattern2: Regex = """(?i)^Decimal(32|64|128|256)\((\d+)\)$""".r
 
@@ -94,7 +94,7 @@ private object ClickhouseDialectExtension extends JdbcDialect {
       case dateTypePattern() =>
         logger.debug(s"Custom mapping applied: DateType for '${_typeName}'")
         Some(DateType)
-      case dateTimeTypePattern() =>
+      case dateTimeTypePattern(_, _) =>
         logger.debug(s"Custom mapping applied: TimestampType for '${_typeName}'")
         Some(TimestampType)
       case decimalTypePattern(precision, scale) =>
@@ -158,12 +158,15 @@ private object ClickhouseDialectExtension extends JdbcDialect {
       Some(JdbcType("Bool", Types.BOOLEAN))
     case ShortType =>
       logger.debug("Custom mapping applied: Int16 for 'ShortType'")
-      Some(JdbcType("Int16", Types.SMALLINT))
+      // Using literal `Int16` fails on Spark 3.x - Spark converts type names to lowercase,
+      // but Clickhouse type names are case-sensitive. See https://issues.apache.org/jira/browse/SPARK-46612
+      // Using SMALLINT as alias for Int16, which is case-insensitive.
+      Some(JdbcType("SMALLINT", Types.SMALLINT))
     case TimestampType =>
       logger.debug("Custom mapping applied: Datetime64(6) for 'TimestampType'")
       Some(JdbcType("Datetime64(6)", Types.TIMESTAMP))
     case ArrayType(et, _) =>
-      logger.debug("Custom mapping applied: Array[T_1] for ArrayType(T_0)")
+      logger.debug("Custom mapping applied: Array[T] for ArrayType(T)")
       getJDBCType(et)
         .orElse(JdbcUtils.getCommonJDBCType(et))
         .map(jdbcType => JdbcType(s"Array(${jdbcType.databaseTypeDefinition})", Types.ARRAY))
