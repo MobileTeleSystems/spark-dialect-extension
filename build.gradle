@@ -15,8 +15,7 @@ plugins {
 group = "io.github.mtsongithub.doetl"
 // TODO: crossbuild for Scala 2.13
 archivesBaseName = "spark-dialect-extension_2.12"
-version = "0.0.1"
-description = "Spark dialect extension for enhanced type handling"
+version = "0.0.2"
 
 repositories {
     mavenCentral()
@@ -109,6 +108,7 @@ mavenPublishing {
 
     pom {
         name = "spark-dialect-extension"
+        description = "Spark dialect extension for enhanced type handling"
         url = "https://theplatform.ru/platforms/dataops"
         inceptionYear = "2024"
         licenses {
