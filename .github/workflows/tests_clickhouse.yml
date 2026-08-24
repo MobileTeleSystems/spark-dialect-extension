@@ -10,13 +10,12 @@ on:
   workflow_dispatch:
 
 env:
-  DEFAULT_JAVA: '11'
   MIN_PROJECT_COVERAGE: 80
   MIN_FILE_COVERAGE: 80
 
 jobs:
   tests:
-    name: Tests
+    name: Tests (${{ matrix.spark-profile }}, jdbc ${{ matrix.clickhouse-jdbc-version }})
     runs-on: ubuntu-latest
 
     permissions:
@@ -25,8 +24,17 @@ jobs:
       pull-requests: write
 
     strategy:
+      fail-fast: false
       matrix:
+        # spark3 -> Scala 2.12 / Spark 3.5 / Java 11
+        # spark4 -> Scala 2.13 / Spark 4.x / Java 17
+        spark-profile: ['spark3', 'spark4']
         clickhouse-jdbc-version: ['0.7.2', '0.9.8']
+        include:
+          - spark-profile: 'spark3'
+            java: '11'
+          - spark-profile: 'spark4'
+            java: '17'
 
     services:
       clickhouse:
@@ -44,14 +52,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup JDK ${{ env.DEFAULT_JAVA }}
+      - name: Setup JDK ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
-          java-version: '${{ env.DEFAULT_JAVA }}'
+          java-version: '${{ matrix.java }}'
           distribution: 'temurin'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -61,14 +66,16 @@ jobs:
 
       - name: Run Integration Tests with Coverage
         run: |
-          ./gradlew test -Pclickhouse.jdbc.version=${{ matrix.clickhouse-jdbc-version }}
+          ./gradlew test \
+            -PsparkProfile=${{ matrix.spark-profile }} \
+            -Pclickhouse.jdbc.version=${{ matrix.clickhouse-jdbc-version }}
 
       - name: Upload coverage results
         if: success() || failure()
         uses: actions/upload-artifact@v7
         with:
-          name: coverage-jdbc-${{ matrix.clickhouse-jdbc-version }}
-          path: build/reports/jacoco/test/*.xml
+          name: coverage-${{ matrix.spark-profile }}-jdbc-${{ matrix.clickhouse-jdbc-version }}
+          path: '**/build/reports/jacoco/test/*.xml'
           # https://github.com/actions/upload-artifact/issues/602
           include-hidden-files: true
 
@@ -91,16 +98,15 @@ jobs:
       - name: Download all coverage reports
         uses: actions/download-artifact@v8
         with:
-          path: build/reports/
+          path: coverage-reports
           pattern: coverage-*
-          merge-multiple: true
 
       - name: Coverage comment
         id: coverage
         uses: madrapps/jacoco-report@v1.7.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          paths: ${{ github.workspace }}/build/reports/jacoco/test/*.xml
+          paths: ${{ github.workspace }}/coverage-reports/**/*.xml
           min-coverage-overall: ${{ env.MIN_PROJECT_COVERAGE }}
           min-coverage-changed-files: ${{ env.MIN_FILE_COVERAGE }}
           title: Coverage

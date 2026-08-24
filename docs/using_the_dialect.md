@@ -4,6 +4,17 @@ This section provides instructions on how to configure Apache Spark to use the S
 
 It is possible to use versions 0.6.x, 0.7.x, and 0.9.x of the Clickhouse JDBC Driver.
 
+Choose the artifact matching your Spark/Scala version:
+
+| Spark        | Scala | Java  | Maven artifact                     |
+|--------------|-------|-------|------------------------------------|
+| 3.5.x        | 2.12  | 8-11  | `spark-dialect-extension_2.12`     |
+| 4.x          | 2.13  | 17    | `spark-dialect-extension_2.13`     |
+
+The examples below use the Scala 2.12 / Spark 3.5 artifact; on Spark 4 replace `_2.12` with
+`_2.13`. Spark 4 additionally requires running on Java 17 with the standard `--add-opens` flags
+(Spark adds these automatically via `spark-submit`; set them yourself for an embedded session).
+
 ### Using onETL with PySpark
 
 See [onETL documentation](https://onetl.readthedocs.io) for installation instructions.

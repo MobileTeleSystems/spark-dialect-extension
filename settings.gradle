@@ -1,0 +1,20 @@
+rootProject.name = "spark-dialect-extension"
+
+// Select the Spark / Scala axis. Only the compatible implementation module is
+// included so a Scala 2.12 build never tries to compile the 2.13 module and
+// vice-versa (mirrors the OpenLineage approach of skipping incompatible modules).
+def sparkProfile = providers.gradleProperty("sparkProfile").getOrElse("spark3")
+
+include ":common"
+
+switch (sparkProfile) {
+    case "spark3":
+        include ":spark35"
+        break
+    case "spark4":
+        include ":spark41"
+        break
+    default:
+        throw new GradleException(
+            "Unknown sparkProfile '${sparkProfile}'. Supported values: 'spark3', 'spark4'.")
+}

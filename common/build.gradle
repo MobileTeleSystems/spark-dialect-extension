@@ -1,0 +1,15 @@
+// Version-agnostic module: the runtime dialect registry plus shared test
+// infrastructure exposed as test fixtures. Its compiled classes are bundled into
+// the published fat jar produced by the active implementation module; this module
+// itself is not published.
+apply plugin: "java-test-fixtures"
+
+def scalaBinary = rootProject.ext.scalaBinaryVersion
+
+dependencies {
+    // Shared test fixtures (SharedSparkSession / ClickhouseFixture / generator),
+    // reused by every implementation module's test suite.
+    testFixturesApi "org.scalatest:scalatest_${scalaBinary}:3.2.19"
+    testFixturesApi "io.github.cdimascio:dotenv-java:3.1.0"
+    testFixturesImplementation "org.apache.spark:spark-sql_${scalaBinary}:${rootProject.ext.sparkVersion}"
+}

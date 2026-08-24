@@ -1,0 +1,153 @@
+// Shared configuration for a Spark-version-specific implementation module
+// (spark35, spark41, ...). Each such module compiles the dialect against one
+// Spark major/minor version and produces the published fat jar that also bundles
+// the version-agnostic :common classes (registry). Only one implementation module
+// is active per build, selected by -PsparkProfile (see settings.gradle).
+//
+// Note: this is applied via `apply from:`, so the plugin classpath is not visible when the
+// script itself is compiled. Plugin classes (e.g. SonatypeHost) are therefore referenced by
+// fully-qualified name and resolved dynamically at runtime instead of via an `import`.
+
+apply plugin: "com.github.maiflai.scalatest"
+apply plugin: "jacoco"
+apply plugin: "net.nemerosa.versioning"
+apply plugin: "com.vanniktech.maven.publish"
+
+def scalaBinary = rootProject.ext.scalaBinaryVersion
+def artifactId = rootProject.ext.publishedArtifactId
+def clickhouseJdbcVersion = rootProject.ext.clickhouseJdbcVersion
+
+// The published jar is named spark-dialect-extension_<scalaBinary>-<version>.jar
+base {
+    archivesName = artifactId
+}
+
+dependencies {
+    // dialect logging (scala-library + spark-sql come from the root subprojects block)
+    implementation "ch.qos.logback:logback-classic:1.3.14"
+
+    // shared test infrastructure lives in :common test fixtures
+    testImplementation testFixtures(project(":common"))
+    testImplementation "org.scalatest:scalatest_${scalaBinary}:3.2.19"
+    testImplementation "io.github.cdimascio:dotenv-java:3.1.0"
+    testRuntimeOnly "com.vladsch.flexmark:flexmark-all:0.64.8"
+
+    // ClickHouse JDBC driver, version selected via -Pclickhouse.jdbc.version.
+    // The 0.9.x line ships the driver classes under the ':all' classifier.
+    testImplementation("com.clickhouse:clickhouse-jdbc:${clickhouseJdbcVersion}${clickhouseJdbcVersion.startsWith('0.9') ? ':all' : ''}") {
+        exclude group: "org.antlr", module: "antlr4-runtime"
+        exclude group: "at.yawk.lz4", module: "lz4-java"
+    }
+}
+
+// Bundle the :common classes (registry) into this module's jar so a single
+// artifact carries both the registry and this Spark version's dialect.
+jar {
+    dependsOn ":common:classes"
+    from project(":common").sourceSets.main.output
+    destinationDirectory = rootProject.layout.buildDirectory.dir("libs")
+
+    manifest {
+        attributes(
+            "Implementation-Title": artifactId,
+            "Implementation-Version": project.version,
+            "Implementation-Vendor": "MTS PJSC",
+            "Created-By": "Gradle ${gradle.gradleVersion}",
+            "Built-By": System.properties["user.name"],
+            "Build-Timestamp": versioning.info.time,
+            "Build-Revision": versioning.info.commit,
+            "Build-Jdk": "${System.properties["java.version"]} (${System.properties["java.vendor"]} ${System.properties["java.vm.version"]})",
+            "Build-OS": "${System.properties["os.name"]} ${System.properties["os.arch"]} ${System.properties["os.version"]}",
+        )
+    }
+}
+
+tasks.register("scaladocJar", Jar) {
+    dependsOn tasks.named("scaladoc")
+    archiveClassifier = "scaladoc"
+    destinationDirectory = rootProject.layout.buildDirectory.dir("libs")
+    from tasks.named("scaladoc").map { it.destinationDir }
+}
+
+test {
+    dependsOn tasks.named("jar")
+    // SharedSparkSession loads the built dialect jar from build/libs and
+    // ClickhouseFixture reads .env; both are resolved relative to the repo root.
+    workingDir = rootProject.projectDir
+    systemProperty("CLICKHOUSE_JDBC_VERSION", clickhouseJdbcVersion)
+
+    // Spark 4 (and Spark on any Java 9+ runtime) needs the module system opened up
+    // for Date/DateTime and unsafe access; harmless on the Spark 3 profile.
+    if (JavaVersion.current().isJava9Compatible()) {
+        jvmArgs += [
+            "--add-opens=java.base/java.lang=ALL-UNNAMED",
+            "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",
+            "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+            "--add-opens=java.base/java.io=ALL-UNNAMED",
+            "--add-opens=java.base/java.net=ALL-UNNAMED",
+            "--add-opens=java.base/java.nio=ALL-UNNAMED",
+            "--add-opens=java.base/java.util=ALL-UNNAMED",
+            "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+            "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
+            "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+            "--add-opens=java.base/sun.nio.cs=ALL-UNNAMED",
+            "--add-opens=java.base/sun.security.action=ALL-UNNAMED",
+            "--add-opens=java.base/sun.util.calendar=ALL-UNNAMED",
+        ]
+    }
+
+    finalizedBy tasks.named("jacocoTestReport")
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+    }
+}
+
+mavenPublishing {
+    // String overload avoids referencing the SonatypeHost class, which an `apply from:` script
+    // cannot import.
+    publishToMavenCentral("CENTRAL_PORTAL")
+    signAllPublications()
+
+    coordinates(project.group.toString(), artifactId, project.version.toString())
+
+    pom {
+        name = "spark-dialect-extension"
+        description = "Spark dialect extension for enhanced type handling"
+        url = "https://mws.ru/data/mws-data-bridge/"
+        inceptionYear = "2024"
+        licenses {
+            license {
+                name = "Apache-2.0"
+                url = "http://www.apache.org/licenses/LICENSE-2.0"
+                distribution = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            }
+        }
+        developers {
+            developer {
+                id = "doetl"
+                name = "MWS Data Bridge"
+                email = "onetools@mts.ru"
+            }
+        }
+        scm {
+            connection = "scm:git:git://github.com/MTSWebServices/spark-dialect-extension.git"
+            developerConnection = "scm:git:ssh://github.com/MTSWebServices/spark-dialect-extension.git"
+            url = "https://github.com/MTSWebServices/spark-dialect-extension"
+        }
+    }
+}
+
+// The Maven-publish plugin creates the `sourcesJar`; extend it so the published sources jar also
+// carries the bundled :common sources, and emit it next to the other artifacts in the root
+// build/libs (so the release workflow's `build/libs/spark-dialect-extension*.jar` glob picks it up).
+afterEvaluate {
+    tasks.named("sourcesJar", Jar).configure {
+        from project(":common").sourceSets.main.allSource
+        destinationDirectory = rootProject.layout.buildDirectory.dir("libs")
+    }
+}
