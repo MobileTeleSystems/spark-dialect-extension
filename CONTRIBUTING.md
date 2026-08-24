@@ -47,8 +47,8 @@ The build is cross-built against two Spark / Scala lines, selected with `-Pspark
 
 | Profile          | Scala | Spark  | Java  | Artifact                        |
 |------------------|-------|--------|-------|---------------------------------|
-| `spark3` (default) | 2.12  | 3.5.x  | 8-11  | `spark-dialect-extension_2.12`  |
-| `spark4`         | 2.13  | 4.x    | 17    | `spark-dialect-extension_2.13`  |
+| `spark3` (default) | 2.12  | 3.5.x  | 8+  | `spark-dialect-extension_2.12`  |
+| `spark4`           | 2.13  | 4.x    | 17+ | `spark-dialect-extension_2.13`  |
 
 Each profile is built with a single command; only the compatible implementation module
 (`spark35` / `spark41`) is compiled. The version-agnostic registry lives in `common` and picks the
