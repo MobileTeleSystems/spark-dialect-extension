@@ -16,7 +16,6 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix:
-        spark-profile: ['spark3', 'spark4']
         include:
           - spark-profile: 'spark3'  # Scala 2.12 -> spark-dialect-extension_2.12
             java: '11'
