@@ -36,20 +36,38 @@ cd spark-dialect-extension
 ### Setup environment
 
 Before you start, ensure you have the following installed:
-- **Java**: Java 8 or higher. [Java Installation Guide](https://adoptopenjdk.net/)
+- **Java**: Java 8+ for the `spark3` profile, Java 17+ for the `spark4` profile. [Java Installation Guide](https://adoptopenjdk.net/)
 - **Gradle**: [Gradle Installation Guide](https://docs.gradle.org/current/userguide/installation.html)
 
 # How to
 
+### Build profiles
+
+The build is cross-built against two Spark / Scala lines, selected with `-PsparkProfile`:
+
+| Profile          | Scala | Spark  | Java  | Artifact                        |
+|------------------|-------|--------|-------|---------------------------------|
+| `spark3` (default) | 2.12  | 3.5.x  | 8+  | `spark-dialect-extension_2.12`  |
+| `spark4`           | 2.13  | 4.x    | 17+ | `spark-dialect-extension_2.13`  |
+
+Each profile is built with a single command; only the compatible implementation module
+(`spark35` / `spark41`) is compiled. The version-agnostic registry lives in `common` and picks the
+implementation at runtime from the Spark version, so one artifact per Scala version is published.
+
 ### Compile the Project
 
-To compile the project and generate a JAR file, run the following command in the project's root directory:
+To compile the project and generate a JAR file, run (in the project's root directory):
 
 ```bash
-./gradlew crossBuildV212Jar crossBuildV213Jar
+# Scala 2.12 / Spark 3.5 (needs Java 8+)
+./gradlew jar -PsparkProfile=spark3
+
+# Scala 2.13 / Spark 4 (needs Java 17+)
+./gradlew jar -PsparkProfile=spark4
 ```
 
-This command compiles the source code and packages it into a .jar files located in the ``build/libs`` directory.
+Each command packages a single fat `.jar` (registry + dialect implementation) into the
+``build/libs`` directory.
 
 ## Run Scala Tests
 
@@ -65,13 +83,20 @@ docker-compose -f docker-compose.test.yml up -d
 
 ### Execute Tests
 
-To run the Scala tests, execute:
+To run the Scala tests, execute (choose the profile / driver version you want to cover):
 
 ```bash
-./gradlew test
+# Spark 3.5 / Scala 2.12 (Java 8-11)
+./gradlew test -PsparkProfile=spark3 -Pclickhouse.jdbc.version=0.9.8
+
+# Spark 4 / Scala 2.13 (Java 17)
+./gradlew test -PsparkProfile=spark4 -Pclickhouse.jdbc.version=0.9.8
 ```
 
-After the tests, you can view the coverage report by opening the ``build/reports/tests/test/index.html`` file in your web browser.
+The version-specific test suites live in the `spark35` / `spark41` modules; shared test
+infrastructure is provided as test fixtures from the `common` module. After the tests, you can
+view the coverage report by opening the ``<module>/build/reports/tests/test/index.html`` file in
+your web browser.
 
 ### Stopping Docker Containers
 After completing the tests, you can stop the Docker containers with:
@@ -93,9 +118,13 @@ To format all Scala source files in the project, execute the following command f
 
 To lint and refactor the code, run Scalafix using the following command:
 ```bash
-./gradlew scalafix
+./gradlew scalafix -PsparkProfile=spark3
 ```
 This command checks the code against various rules specified in the ```.scalafix.conf``` file and applies fixes where possible.
+
+Scalafix is only wired into the `spark3` profile: `semanticdb-scalac` is not published for the
+Scala 2.13 patch that Spark 4 pulls in, so it is disabled on `spark4`. Scalafmt (`scalafmtAll`)
+runs on both profiles.
 
 ## Create a pull request
 

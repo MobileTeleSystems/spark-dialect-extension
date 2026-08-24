@@ -1,3 +1,17 @@
+## 0.0.6 (unreleased)
+
+### Features
+
+Added support for Apache Spark 4.x on Scala 2.13, published as `spark-dialect-extension_2.13`
+alongside the existing `spark-dialect-extension_2.12` for Spark 3.5.x (Scala 2.12). The build is
+cross-built via `-PsparkProfile=spark3|spark4`; the correct dialect implementation is selected at
+runtime from the Spark version, so a single Scala 2.13 artifact covers every Spark 4.x minor
+release. Spark 4 requires Java 17.
+
+Spark 4's `JdbcDialect.isObjectNotFoundException` is overridden to recognise ClickHouse error code
+60 (`UNKNOWN_TABLE`) via the JDBC `SQLException` vendor code, so writing to a not-yet-existing
+table works. This is locale-independent (does not depend on the server error message text).
+
 ## 0.0.5 (2026-08-03)
 
 ### Improvements

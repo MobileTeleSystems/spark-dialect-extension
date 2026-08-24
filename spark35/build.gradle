@@ -1,0 +1,3 @@
+// Spark 3.5.x / Scala 2.12 dialect implementation.
+// All shared implementation-module wiring lives in gradle/spark-impl.gradle.
+apply from: "${rootProject.projectDir}/gradle/spark-impl.gradle"

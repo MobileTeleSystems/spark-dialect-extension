@@ -8,7 +8,10 @@
 This repository adds custom Spark JDBC dialects, enhansing or fixing Apache Spark issues with handling some JDBC types.
 
 **Notes:**
-- for now only Spark 3.5.x is supported.
+- Spark 3.5.x (Scala 2.12, Java 8+) and Spark 4.x (Scala 2.13, Java 17+) are supported.
+  Pick the artifact matching your Scala version: `spark-dialect-extension_2.12` for Spark 3.5,
+  `spark-dialect-extension_2.13` for Spark 4. The right dialect implementation is selected at
+  runtime from the Spark version, so a single artifact covers every Spark 4.x minor release.
 - for now Clickhouse JDBC Driver 0.6.x, 0.7.x and 0.9.x is supported.
 
 ## Documentation Index
