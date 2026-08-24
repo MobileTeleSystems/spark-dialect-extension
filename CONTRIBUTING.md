@@ -62,7 +62,7 @@ To compile the project and generate a JAR file, run (in the project's root direc
 # Scala 2.12 / Spark 3.5 (needs Java 8+)
 ./gradlew jar -PsparkProfile=spark3
 
-# Scala 2.13 / Spark 4 (needs Java 17)
+# Scala 2.13 / Spark 4 (needs Java 17+)
 ./gradlew jar -PsparkProfile=spark4
 ```
 
