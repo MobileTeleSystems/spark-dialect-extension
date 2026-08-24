@@ -28,7 +28,6 @@ jobs:
       matrix:
         # spark3 -> Scala 2.12 / Spark 3.5 / Java 11
         # spark4 -> Scala 2.13 / Spark 4.x / Java 17
-        spark-profile: ['spark3', 'spark4']
         clickhouse-jdbc-version: ['0.7.2', '0.9.8']
         include:
           - spark-profile: 'spark3'
