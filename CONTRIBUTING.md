@@ -36,7 +36,7 @@ cd spark-dialect-extension
 ### Setup environment
 
 Before you start, ensure you have the following installed:
-- **Java**: Java 8-11 for the `spark3` profile, Java 17 for the `spark4` profile. [Java Installation Guide](https://adoptopenjdk.net/)
+- **Java**: Java 8+ for the `spark3` profile, Java 17+ for the `spark4` profile. [Java Installation Guide](https://adoptopenjdk.net/)
 - **Gradle**: [Gradle Installation Guide](https://docs.gradle.org/current/userguide/installation.html)
 
 # How to
